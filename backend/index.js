@@ -10,38 +10,12 @@ const paymentRoutes = require('./routes/paymentRoutes.js');
 const hiringRoutes = require('./routes/hiringRoutes.js');
 
 require('dotenv').config();
+const url =  'https://devsync-dev.onrender.com/'||'http://localhost:5173' ;
 const app = express();
-
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://devsync-dev.onrender.com',
-  'https://devsync.onrender.com' 
-];
-
-app.options('*', cors({
-  origin: function(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-}));
-
 app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  exposedHeaders: ['set-cookie']
+  origin:url , 
+  credentials: true
 }));
-
 
 connectDB();
 app.use(express.json());
@@ -61,5 +35,5 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Something went wrong' });
 });
 
-const PORT = process.env.PORT ;
+const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

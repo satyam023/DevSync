@@ -6,25 +6,22 @@ const gravatar = require('gravatar');
 const setTokenInCookie = (res, token) => {
   res.cookie('token', token, {
     httpOnly: true,
-    secure: true, 
-    sameSite: 'none', 
-    domain: '.onrender.com', 
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Strict',
     maxAge: 3 * 60 * 60 * 1000,
-    path: '/',
-   partitioned: true 
+     partitioned: true 
   });
 };
 
 const logoutUser = (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
-    secure: true,
-    sameSite: 'none',
-    domain: '.onrender.com',
-    path: '/',
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Strict',
   });
   res.status(200).json({ message: 'User logged out successfully' });
 };
+
 
 const registerUser = async (req, res) => {
   try {
@@ -151,7 +148,7 @@ const checkAuth = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
-// Example backend controller
+
 const deleteUserAccount = async (req, res) => {
   try {
     const userId = req.user.id;
