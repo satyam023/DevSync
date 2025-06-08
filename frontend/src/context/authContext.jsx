@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
   const checkAuth = async () => {
     try {
       setLoading(true);
-      const { data } = await API.get('/auth/check-auth');
+      const { data } = await API.get('/auth/check-auth' , { withCredentials: true });
       if (data?.user) {
         setUser(data.user);
       } else {
@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       clearAuthState();
-      navigate('/login', { replace: true });
+      navigate('/', { replace: true });
       return { success: true, message: data.message };
     } catch (error) {
       const errorMsg = error.response?.data?.message || error.message || 'Account deletion failed';
