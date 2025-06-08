@@ -1,6 +1,5 @@
 import axios from 'axios';
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-
 const API = axios.create({
   baseURL,
   withCredentials: true,
@@ -18,12 +17,11 @@ API.interceptors.request.use(
   }
 );
 API.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
-   
-    if (error.response) {
+    if (error.response?.status === 401) {
+      window.location.href = '/login';
+    } {
       switch (error.response.status) {
         case 401: 
           break;

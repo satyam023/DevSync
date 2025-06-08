@@ -11,6 +11,7 @@ const setTokenInCookie = (res, token) => {
     domain: '.onrender.com', 
     maxAge: 3 * 60 * 60 * 1000,
     path: '/',
+   partitioned: true 
   });
 };
 
