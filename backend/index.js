@@ -10,10 +10,13 @@ const paymentRoutes = require('./routes/paymentRoutes.js');
 const hiringRoutes = require('./routes/hiringRoutes.js');
 
 require('dotenv').config();
-const url =  'https://devsync-dev.onrender.com/'||'http://localhost:5173' ;
-const app = express();
+
+const origins = process.env.NODE_ENV === 'production'
+  ? ['https://devsync-dev.onrender.com']
+  : ['http://localhost:5173', 'https://devsync-dev.onrender.com'];
+
 app.use(cors({
-  origin:url , 
+  origin: origins,
   credentials: true
 }));
 
