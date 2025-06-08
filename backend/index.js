@@ -8,7 +8,7 @@ const skillExchangeRoutes = require('./routes/skillExchangeRoute.js');
 const mentorRequestRoutes = require('./routes/mentorRequestRoutes.js');
 const paymentRoutes = require('./routes/paymentRoutes.js');
 const hiringRoutes = require('./routes/hiringRoutes.js');
-
+const app = express();
 require('dotenv').config();
 
 const origins = process.env.NODE_ENV === 'production'
