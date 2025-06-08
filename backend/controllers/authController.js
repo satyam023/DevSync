@@ -6,21 +6,24 @@ const gravatar = require('gravatar');
 const setTokenInCookie = (res, token) => {
   res.cookie('token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+    secure: true, 
+    sameSite: 'none', 
+    domain: '.onrender.com', 
     maxAge: 3 * 60 * 60 * 1000,
+    path: '/',
   });
 };
 
 const logoutUser = (req, res) => {
   res.clearCookie('token', {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+    secure: true,
+    sameSite: 'none',
+    domain: '.onrender.com',
+    path: '/',
   });
   res.status(200).json({ message: 'User logged out successfully' });
 };
-
 
 const registerUser = async (req, res) => {
   try {
