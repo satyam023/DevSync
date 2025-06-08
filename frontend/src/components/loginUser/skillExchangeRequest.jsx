@@ -81,12 +81,6 @@ useEffect(() => {
     }));
   };
 
-  if (loading) return (
-    <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
-      <CircularProgress />
-    </Box>
-  );
-
   const visibleRequests = requests.filter(r => r.recipient._id === userId && r.status !== 'rejected');
   const sentByMe = requests.filter(r => r.requester._id === userId);
 const pending = requests.filter(
