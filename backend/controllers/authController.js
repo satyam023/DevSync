@@ -6,19 +6,20 @@ const gravatar = require('gravatar');
 const setTokenInCookie = (res, token) => {
   res.cookie('token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'Strict',
-    maxAge: 3 * 60 * 60 * 1000,
-     partitioned: true 
+    secure: process.env.NODE_ENV === 'production', 
+    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+    maxAge: 3 * 60 * 60 * 1000, 
   });
 };
 
+
 const logoutUser = (req, res) => {
-  res.clearCookie('token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'Strict',
-  });
+ res.clearCookie('token', {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+});
+
   res.status(200).json({ message: 'User logged out successfully' });
 };
 
@@ -135,16 +136,17 @@ const loginUser = async (req, res) => {
 
 
 const checkAuth = async (req, res) => {
-  if (!req.user) {
-    return res.status(401).json({ message: 'Not authenticated' });
-  }
-
   try {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
     const user = await User.findById(req.user.id).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    res.json({ user });
+    res.status(200).json({ user });  
   } catch (err) {
+    console.error('Check auth error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
