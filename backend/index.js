@@ -14,23 +14,29 @@ const app = express();
 
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://devsync-dev.onrender.com'
+  'https://devsync-dev.onrender.com',
+  'https://devsync.onrender.com' // Add any other production domains
 ];
 
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
+    // Allow requests with no origin (like mobile apps, Postman, or server-to-server)
     if (!origin) return callback(null, true);
-
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('CORS policy violation: Origin not allowed'), false);
+    
+    // Check if origin is in allowed list or is a subdomain of your main domain
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.devsync-dev.onrender.com') ||
+      origin.endsWith('.devsync.onrender.com')
+    ) {
+      return callback(null, true);
     }
+    
+    callback(new Error('Not allowed by CORS'), false);
   },
   credentials: true,
+  exposedHeaders: ['set-cookie'] // Important for cookie-based auth
 }));
-
 
 
 connectDB();
