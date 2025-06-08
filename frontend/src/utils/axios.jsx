@@ -1,10 +1,11 @@
 import axios from 'axios';
+
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+
 const API = axios.create({
   baseURL,
   withCredentials: true,
 });
-
 
 API.interceptors.request.use(
   (config) => {
@@ -12,34 +13,22 @@ API.interceptors.request.use(
     config.headers['Cache-Control'] = 'no-cache';
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
+
 API.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const path = window.location.pathname;
+
+    if (status === 401 && path !== '/login') {
       window.location.href = '/login';
-    } {
-      switch (error.response.status) {
-        case 401: 
-          break;
-        case 403: 
-          break;
-        case 404: 
-          break;
-        case 500: 
-          break;
-        default:
-          break;
-      }
     }
+
     const formattedError = {
-      message: error.response?.data?.message || 
-              error.message || 
-              'An unexpected error occurred',
-      status: error.response?.status,
+      message: error.response?.data?.message || error.message || 'An unexpected error occurred',
+      status: status,
       data: error.response?.data,
     };
 
