@@ -175,7 +175,7 @@ const LandingPage = () => {
             Ready to Join Our Developer Community?
           </Typography>
           <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary' }}>
-            Thousands of developers are already building amazing projects on DevWorld.
+            Thousands of developers are already building amazing projects on DevSync.
           </Typography>
           <Button
             component={Link}
