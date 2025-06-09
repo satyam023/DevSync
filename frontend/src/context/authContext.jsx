@@ -47,7 +47,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const redirectIfNotOnAuthPage = () => {
-    const publicRoutes = ['/login', '/signup'];
+    const publicRoutes = ['/', '/signup'];
     if (!publicRoutes.includes(location.pathname)) {
       navigate('/login', { replace: true });
     }

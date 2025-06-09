@@ -22,10 +22,10 @@ API.interceptors.response.use(
     const status = error.response?.status;
     const path = window.location.pathname;
 
-    if (status === 401 && path !== '/login') {
-      window.location.href = '/login';
+     if (status === 401 && !['/', '/login', '/signup'].includes(path)) {
+      window.location.href = '/';
     }
-
+    
     const formattedError = {
       message: error.response?.data?.message || error.message || 'An unexpected error occurred',
       status: status,
