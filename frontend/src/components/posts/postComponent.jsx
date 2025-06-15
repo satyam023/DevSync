@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/authContext';
-import { Container, Grid, CircularProgress, Alert, Box, Typography } from '@mui/material';
 import API from '../../utils/axios';
 import PostCard from './postCard';
 import PostForm from './postForm';
@@ -66,7 +65,7 @@ const PostComponent = ({ mode = 'list', onPostCreated }) => {
   const handleToggleLike = async (postId) => {
     try {
       await API.post(`/posts/${postId}/toggle-like`);
-      fetchPosts(); 
+      fetchPosts();
     } catch (err) {
       console.error('Failed to toggle like:', err);
     }
@@ -75,55 +74,54 @@ const PostComponent = ({ mode = 'list', onPostCreated }) => {
   const handleCommentSubmit = async (postId, text) => {
     try {
       await API.post(`/posts/${postId}/comments`, { text });
-      fetchPosts(); 
+      fetchPosts();
     } catch (err) {
       console.error('Failed to post comment:', err);
     }
   };
 
+  // Create mode
   if (mode === 'create') {
     return (
-      <Container maxWidth="sm" sx={{ mt: 3 }}>
-        <PostForm 
+      <div className="max-w-xl mx-auto mt-8 px-4">
+        <PostForm
           onSubmit={handleCreatePost}
           loading={loading}
           error={error}
           success={success}
         />
-      </Container>
+      </div>
     );
   }
 
+  // List mode
   return (
-    <Container sx={{ mt: 3 }}>
-      <Typography variant="h5" gutterBottom>
-        My Posts
-      </Typography>
+    <div className="max-w-7xl mx-auto px-4 mt-8">
+      <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">My Posts</h2>
 
       {loading ? (
-        <Box display="flex" justifyContent="center" mt={5}>
-          <CircularProgress />
-        </Box>
+        <div className="flex justify-center mt-16">
+          <div className="h-10 w-10 border-4 border-blue-500 border-dashed rounded-full animate-spin" />
+        </div>
       ) : error ? (
-        <Alert severity="error">{error}</Alert>
+        <div className="bg-red-100 text-red-700 p-3 rounded-md">{error}</div>
       ) : posts.length === 0 ? (
-        <Typography>No posts found.</Typography>
+        <p className="text-gray-500">No posts found.</p>
       ) : (
-        <Grid container spacing={3}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
           {posts.map(post => (
-            <Grid item xs={12} md={6} key={post._id}>
-              <PostCard
-                post={post}
-                currentUserId={currentUserId}
-                onDelete={handleDelete}
-                onToggleLike={handleToggleLike}
-                onCommentSubmit={handleCommentSubmit}
-              />
-            </Grid>
+            <PostCard
+              key={post._id}
+              post={post}
+              currentUserId={currentUserId}
+              onDelete={handleDelete}
+              onToggleLike={handleToggleLike}
+              onCommentSubmit={handleCommentSubmit}
+            />
           ))}
-        </Grid>
+        </div>
       )}
-    </Container>
+    </div>
   );
 };
 

@@ -2,14 +2,10 @@ import { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/authContext.jsx'; 
 import {
-  Button, Container, Box, Typography, Grid, Paper, useTheme,
-} from '@mui/material';
-import {
   Code, Group, School, Security, EmojiObjects, SupportAgent, Rocket,
 } from '@mui/icons-material';
 
 const LandingPage = () => {
-  const theme = useTheme();
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
@@ -21,174 +17,74 @@ const LandingPage = () => {
 
   if (loading || user) return null;
   return (
-    <Box sx={{ bgcolor: '#f7f9fc', minHeight: '100vh' }}>
-      <Container maxWidth="lg" sx={{ py: 12 }}>
-        <Grid container spacing={6} alignItems="center" justifyContent="center">
-          <Grid item xs={12} md={6}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography
-                variant="h2"
-                component="h1"
-                gutterBottom
-                sx={{ fontWeight: 800 }}
-              >
-                Welcome to{' '}
-                <Box component="span" sx={{ color: 'primary.main' }}>
-                  DevSync
-                </Box>
-              </Typography>
-              <Typography
-                variant="h6"
-                sx={{ mb: 4, color: 'text.secondary', px: { xs: 2, sm: 6 } }}
-              >
-                A modern platform for developers to{' '}
-                <strong>learn</strong>, <strong>collaborate</strong>, and{' '}
-                <strong>build</strong> together
-                 <Button
-                  component={Link}
-                  to="/learn-more"
-                  variant="text"
-                  size="large"
-                >
-                  Learn More.
-                </Button>
-              </Typography>
-              <Box
-                sx={{
-                  display: 'flex',
-                  gap: 2,
-                  flexWrap: 'wrap',
-                  justifyContent: 'center',
-                }}
-              >
-                <Button
-                  component={Link}
-                  to="/login"
-                  variant="contained"
-                  size="large"
-                  startIcon={<Rocket />}
-                >
-                  Get Started
-                </Button>
-                <Button
-                  component={Link}
-                  to="/signup"
-                  variant="outlined"
-                  size="large"
-                >
-                  Create Account
-                </Button>
-               
-              </Box>
-            </Box>
-          </Grid>
-        </Grid>
-      </Container>
+    <div className="bg-gradient-to-b from-gray-100 to-white min-h-screen w-full">
+      <div className="max-w-6xl mx-auto px-4 py-16 text-center">
+        <h1 className="text-4xl md:text-5xl font-extrabold mb-4">
+          Welcome to <span className="text-blue-600">DevSync</span>
+        </h1>
+        <p className="text-gray-600 text-lg md:text-xl mb-6">
+          A modern platform for <strong>learning</strong>, <strong>collaborating</strong>, and <strong>building</strong> together
+          <Link to="/learn-more" className="ml-2 text-blue-600 underline hover:text-blue-800">
+            Learn More
+          </Link>
+        </p>
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <Link to="/login">
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2">
+              <Rocket fontSize="small" /> Get Started
+            </button>
+          </Link>
+          <Link to="/signup">
+            <button className="border border-blue-600 text-blue-600 hover:bg-blue-100 px-6 py-3 rounded-lg font-semibold">
+              Create Account
+            </button>
+          </Link>
+        </div>
+      </div>
 
-      {/* Features Section */}
-      <Box sx={{ py: 10, backgroundColor: '#f0f4fa' }}>
-        <Container maxWidth="lg">
-          <Typography
-            variant="h4"
-            align="center"
-            gutterBottom
-            sx={{ fontWeight: 'bold', mb: 6 }}
-          >
-            Why Choose DevSync?
-          </Typography>
-          <Grid container spacing={4} justifyContent="center" alignItems="stretch">
-            {[
-              {
-                icon: <Code fontSize="large" />,
-                title: 'Code Collaboration',
-                description: 'Collaborate with your team in real time',
-              },
-              {
-                icon: <Group fontSize="large" />,
-                title: 'Community Support',
-                description: 'Join and grow with global developers',
-              },
-              {
-                icon: <School fontSize="large" />,
-                title: 'Learning Resources',
-                description: 'Explore curated tutorials and hands-on projects',
-              },
-              {
-                icon: <Security fontSize="large" />,
-                title: 'Secure Environment',
-                description: 'Your code and data stay fully protected',
-              },
-              {
-                icon: <EmojiObjects fontSize="large" />,
-                title: 'Innovative Tools',
-                description: 'Boost productivity with modern dev tools',
-              },
-              {
-                icon: <SupportAgent fontSize="large" />,
-                title: '24/7 Support',
-                description: 'Expert help available anytime you need',
-              },
-            ].map((feature, index) => (
-              <Grid item xs={12} md={6} key={index} sx={{ display: 'flex' }}>
-                <Paper
-                  elevation={3}
-                  sx={{ width: '100%', height: '100%', p: 4, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-                    alignItems: 'center', textAlign: 'center', transition: 'transform 0.3s, box-shadow 0.3s',
-                    '&:hover': {
-                      transform: 'translateY(-6px)',
-                      boxShadow: 6,
-                    },
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  <Box
-                    sx={{
-                      mb: 3,display: 'inline-flex',alignItems: 'center',justifyContent: 'center',width: 70,
-                      height: 70,borderRadius: '50%',backgroundColor: 'primary.light',color: 'primary.main',
-                    }}
-                  >
-                    {feature.icon}
-                  </Box>
-                  <Typography variant="h6" gutterBottom>
-                    {feature.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {feature.description}
-                  </Typography>
-                </Paper>
-              </Grid>
+      <div className="bg-blue-50 py-16">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-10">Why Choose DevSync?</h2>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[{
+              icon: <Code fontSize="large" />, title: 'Code Collaboration', description: 'Collaborate with your team in real time',
+            }, {
+              icon: <Group fontSize="large" />, title: 'Community Support', description: 'Join and grow with global developers',
+            }, {
+              icon: <School fontSize="large" />, title: 'Learning Resources', description: 'Explore curated tutorials and hands-on projects',
+            }, {
+              icon: <Security fontSize="large" />, title: 'Secure Environment', description: 'Your code and data stay fully protected',
+            }, {
+              icon: <EmojiObjects fontSize="large" />, title: 'Innovative Tools', description: 'Boost productivity with modern dev tools',
+            }, {
+              icon: <SupportAgent fontSize="large" />, title: '24/7 Support', description: 'Expert help available anytime you need',
+            }].map((feature, index) => (
+              <div key={index} className="bg-white rounded-xl p-6 shadow-md text-center hover:shadow-xl transition duration-300">
+                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 mx-auto mb-4">
+                  {feature.icon}
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                <p className="text-gray-600 text-sm">{feature.description}</p>
+              </div>
             ))}
-          </Grid>
+          </div>
+        </div>
+      </div>
 
-        </Container>
-      </Box>
-
-
-      {/* Call to Action */}
-      <Box sx={{ py: 10, textAlign: 'center', backgroundColor: '#e3f2fd' }}>
-        <Container maxWidth="md">
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{ fontWeight: 'bold', mb: 2 }}
-          >
-            Ready to Join Our Developer Community?
-          </Typography>
-          <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary' }}>
-            Thousands of developers are already building amazing projects on DevSync.
-          </Typography>
-          <Button
-            component={Link}
-            to="/signup"
-            variant="contained"
-            size="large"
-            sx={{ px: 6, py: 1.5 }}
-          >
+      <div className="py-16 text-center bg-blue-100">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4">
+          Ready to Join Our Developer Community?
+        </h2>
+        <p className="text-gray-700 mb-6 max-w-xl mx-auto">
+          Thousands of developers are already building amazing projects on DevSync.
+        </p>
+        <Link to="/signup">
+          <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold">
             Sign Up Free
-          </Button>
-        </Container>
-      </Box>
-    </Box>
+          </button>
+        </Link>
+      </div>
+    </div>
   );
 };
 

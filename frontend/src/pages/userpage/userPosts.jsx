@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import API from '../../utils/axios.jsx';
-import { Box, CircularProgress, Typography, Container, Grid } from '@mui/material';
+import { Box, CircularProgress, Typography, Container } from '@mui/material';
 import ErrorBoundary from '../../components/dialog/errorBoundry.jsx';
 import PostCard from './../postpage/postCard.jsx';
 import { useAuth } from '../../context/authContext';
@@ -41,29 +41,33 @@ const UserPosts = () => {
   );
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 6, px: { xs: 2, md: 4 } }}>
-      <Grid container spacing={4}>
+    <Container
+      maxWidth="xl"
+      sx={{ mt: 4, mb: 6 }}
+      className="px-4 sm:px-6"
+    >
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
         {posts.length === 0 ? (
-          <Grid item xs={12}>
-            <Typography variant="h6" align="center" sx={{ py: 4  ,  marginLeft: '30vw'}}>
+          <div className="col-span-full text-center py-10">
+            <Typography variant="h6" className="text-gray-600">
               No posts from this user yet.
             </Typography>
-          </Grid>
+          </div>
         ) : (
-          posts.map(post => (
-            <Grid item xs={12} sm={6} md={6} key={post._id}> 
-              <Box sx={{ display: 'flex', justifyContent: 'center', minHeight:200 }}>
+          posts.map((post) => (
+            <div key={post._id} className="flex justify-center">
+              <Box className="w-full max-w-md">
                 <PostCard
                   post={post}
                   user={currentUser}
                   setPosts={setPosts}
-                  setFilteredPosts={setPosts} 
+                  setFilteredPosts={setPosts}
                 />
               </Box>
-            </Grid>
+            </div>
           ))
         )}
-      </Grid>
+      </div>
     </Container>
   );
 };

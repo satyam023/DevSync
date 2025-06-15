@@ -1,7 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/authContext';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, CircularProgress, Box} from '@mui/material';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  CircularProgress
+} from '@mui/material';
 
 const DeleteAccountButton = () => {
   const { deleteAccount } = useAuth();
@@ -30,46 +38,38 @@ const DeleteAccountButton = () => {
   };
 
   return (
-    <Box sx={{ mt: 4  , marginLeft: '55vw'}}>
+    <div className="mt-10 flex justify-center md:justify-end px-4">
       <Button
         variant="contained"
         color="error"
         onClick={handleOpen}
         startIcon={<DeleteIcon />}
-        sx={{ px: 3 }}
+        className="px-6"
       >
         Delete Account
       </Button>
 
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="delete-account-dialog"
-      >
-        <DialogTitle id="delete-account-dialog">
-          Confirm Account Deletion
-        </DialogTitle>
+      <Dialog open={open} onClose={handleClose}>
+        <DialogTitle>Confirm Account Deletion</DialogTitle>
         <DialogContent>
           <DialogContentText>
             Are you absolutely sure you want to delete your account? This action:
           </DialogContentText>
-          <ul>
-            <li><DialogContentText>Cannot be undone</DialogContentText></li>
-            <li><DialogContentText>Will permanently remove all your data</DialogContentText></li>
-            <li><DialogContentText>Will log you out immediately</DialogContentText></li>
+          <ul className="pl-5 mt-2 list-disc text-sm text-gray-700">
+            <li>Cannot be undone</li>
+            <li>Will permanently remove all your data</li>
+            <li>Will log you out immediately</li>
           </ul>
           {error && (
-            <DialogContentText color="error" sx={{ mt: 1 }}>
-              {error}
-            </DialogContentText>
+            <p className="text-red-500 text-sm mt-3">{error}</p>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose} disabled={loading}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleDelete} 
+          <Button
+            onClick={handleDelete}
             color="error"
             disabled={loading}
             startIcon={loading ? <CircularProgress size={20} /> : null}
@@ -78,7 +78,7 @@ const DeleteAccountButton = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 };
 

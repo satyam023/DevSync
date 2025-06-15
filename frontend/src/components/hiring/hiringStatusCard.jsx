@@ -1,322 +1,269 @@
 import React, { useEffect, useState } from 'react';
-import {
-    Card, CardContent, Typography, Chip, Divider, Box, CircularProgress, 
-    Stack, Button, ButtonGroup, Tabs, Tab, Avatar,} from '@mui/material';
+import { Avatar } from '@mui/material';
+import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
+import { Business, Work } from '@mui/icons-material';
 import API from '../../utils/axios.jsx';
-import { ExpandLess, ExpandMore, SwapHoriz } from '@mui/icons-material';
-import PaymentButton from '../../components/payment/paymentButton.jsx'
+import PaymentButton from '../../components/payment/paymentButton.jsx';
 
 const HiringStatusCard = ({ user }) => {
-    const [hirings, setHirings] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [actionLoading, setActionLoading] = useState(null);
-    const [tabIndex, setTabIndex] = useState(0);
+  // All existing state and functionality remains exactly the same
+  const [hirings, setHirings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null);
+  const [tabIndex, setTabIndex] = useState(0);
+  const [expandedTabs, setExpandedTabs] = useState({ 0: true, 1: false, 2: false });
 
-    const [expandedTabs, setExpandedTabs] = useState({
-        0: true,
-        1: false,
-        2: false,
-    });
+  const role = user.role?.toLowerCase();
+  const isRecruiter = role === 'recruiter';
+  const isDeveloper = role === 'developer';
 
-    const role = user.role?.toLowerCase();
-    const isRecruiter = role === 'recruiter';
-    const isDeveloper = role === 'developer';
+  // Keep all existing useEffect and functions exactly as they were
+  useEffect(() => {
+    const fetchHiringData = async () => {
+      setLoading(true);
+      try {
+        let endpoint = '';
+        if (isRecruiter) endpoint = '/hiring/sent';
+        else if (isDeveloper) endpoint = '/hiring/received';
+        else return;
 
-   
-    const toggleTabExpansion = (index) => {
-        setExpandedTabs((prev) => ({
-            ...prev,
-            [index]: !prev[index],
-        }));
+        const res = await API.get(endpoint);
+        setHirings(res.data.hirings || []);
+      } catch (error) {
+        console.error('Error fetching hiring data:', error);
+        setHirings([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    useEffect(() => {
-        const fetchHiringData = async () => {
-            setLoading(true);
-            try {
-                let endpoint = '';
-                if (isRecruiter) endpoint = '/hiring/sent';
-                else if (isDeveloper) endpoint = '/hiring/received';
-                else return;
+    fetchHiringData();
+  }, [isRecruiter, isDeveloper, tabIndex]);
 
-                const res = await API.get(endpoint);
-                setHirings(res.data.hirings || []);
-            } catch (error) {
-                console.error('Error fetching hiring data:', error);
-                setHirings([]);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchHiringData();
-    }, [isRecruiter, isDeveloper ,tabIndex ]);
-
-    const updateStatus = async (id, newStatus) => {
-        setActionLoading(id);
-        try {
-            let endpoint = '';
-            let data = {};
-            if (newStatus === 'accepted') endpoint = `/hiring/accept/${id}`;
-            else if (newStatus === 'rejected') endpoint = `/hiring/reject/${id}`;
-            else if (newStatus === 'completed') endpoint = `/hiring/complete/${id}`;
-            else {
-                endpoint = `/hiring/status/${id}`;
-                data = { status: newStatus };
-            }
-            await API.patch(endpoint, data);
-            setHirings((prev) => {
-                if (newStatus === 'rejected') {
-                    return prev.filter((h) => h._id !== id);
-                }
-                return prev.map((h) => (h._id === id ? { ...h, status: newStatus } : h));
-            });
-        } catch (error) {
-            console.error(`Failed to update status to ${newStatus}:`, error);
-        } finally {
-            setActionLoading(null);
+  const updateStatus = async (id, newStatus) => {
+    // Keep original implementation
+    setActionLoading(id);
+    try {
+      let endpoint = '';
+      let data = {};
+      if (newStatus === 'accepted') endpoint = `/hiring/accept/${id}`;
+      else if (newStatus === 'rejected') endpoint = `/hiring/reject/${id}`;
+      else if (newStatus === 'completed') endpoint = `/hiring/complete/${id}`;
+      else {
+        endpoint = `/hiring/status/${id}`;
+        data = { status: newStatus };
+      }
+      await API.patch(endpoint, data);
+      setHirings((prev) => {
+        if (newStatus === 'rejected') {
+          return prev.filter((h) => h._id !== id);
         }
-    };
+        return prev.map((h) => (h._id === id ? { ...h, status: newStatus } : h));
+      });
+    } catch (error) {
+      console.error(`Failed to update status to ${newStatus}:`, error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
-    const handleTabChange = (event, newValue) => {
-        setTabIndex(newValue);
-    };
+  const filterByStatus = (status) => hirings.filter((h) => h.status === status);
 
-    if (!isRecruiter && !isDeveloper) return null;
+  // Only UI changes below this point
+  const statusColors = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    accepted: 'bg-green-100 text-green-800',
+    rejected: 'bg-red-100 text-red-800',
+    completed: 'bg-blue-100 text-blue-800',
+    default: 'bg-gray-100 text-gray-800',
+  };
 
-    if (loading) return <CircularProgress sx={{ m: 2 }} />;
-
-    const filterByStatus = (status) => hirings.filter((h) => h.status === status);
-
-    const devTabs = [
-        { label: `Pending (${filterByStatus('pending').length})`, status: 'pending' },
-        { label: `Accepted (${filterByStatus('accepted').length})`, status: 'accepted' },
-        { label: `Completed (${filterByStatus('completed').length})`, status: 'completed' },
-    ];
-
-    const recTabs = [
+  const tabs = isRecruiter
+    ? [
         { label: `Sent (${hirings.length})`, status: 'sent' },
         { label: `Accepted (${filterByStatus('accepted').length})`, status: 'accepted' },
         { label: `Completed (${filterByStatus('completed').length})`, status: 'completed' },
-    ];
+      ]
+    : [
+        { label: `Pending (${filterByStatus('pending').length})`, status: 'pending' },
+        { label: `Accepted (${filterByStatus('accepted').length})`, status: 'accepted' },
+        { label: `Completed (${filterByStatus('completed').length})`, status: 'completed' },
+      ];
 
-    // Function to render list items for developer
-    const renderDevHiringList = (list, status) => {
-        if (list.length === 0) return <Typography>No requests in this category.</Typography>;
+  const toggleTabExpansion = (index) => {
+    setExpandedTabs((prev) => ({ ...prev, [index]: !prev[index] }));
+  };
 
-        return list.map((hire) => (
-            <Box key={hire._id} sx={{ border: '1px solid #ccc', borderRadius: 2, p: 2, mb: 1 }}>
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                    <Avatar src={hire.recruiter?.image} alt={hire.recruiter?.name || 'R'} />
-                    <Typography variant="body1" fontWeight="bold">
-                        From: {hire.recruiter?.name || 'Unknown Recruiter'}
-                    </Typography>
-                </Stack>
-
-                <Typography variant="body2">Role: {hire.role}</Typography>
-                <Typography variant="body2">Duration: {hire.duration}</Typography>
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                    Message: {hire.message}
-                </Typography>
-
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                    <Chip
-                        label={hire.status?.toUpperCase() || 'UNKNOWN'}
-                        color={
-                            hire.status === 'pending'
-                                ? 'warning'
-                                : hire.status === 'accepted'
-                                    ? 'success'
-                                    : hire.status === 'rejected'
-                                        ? 'error'
-                                        : hire.status === 'completed'
-                                            ? 'primary'
-                                            : 'info'
-                        }
-                    />
-
-                    {/* Payemnet status only shown when dev accept req*/}
-                    {hire.status === 'accepted' && (
-                        <Chip
-                            label={hire.paid ? 'Payment Received' : 'Payment Pending'}
-                            color={hire.paid ? 'success' : 'warning'}
-                            variant="outlined"
-                            size="small"
-                        />
-                    )}
-                </Stack>
-
-                {(status === 'pending' || status === 'accepted') && (
-                    <ButtonGroup variant="outlined" size="small" sx={{ mt: 1 }} disabled={actionLoading === hire._id}>
-                        {status === 'pending' && (
-                            <>
-                                <Button
-                                    sx={{ ml: 1 }}color="success" 
-                                    onClick={() => updateStatus(hire._id, 'accepted')}
-                                >
-                                    Accept
-                                </Button>
-                                <Button
-                                    sx={{ ml: 1 }}  color="error"
-                                    onClick={() => updateStatus(hire._id, 'rejected')}
-                                >
-                                    Reject
-                                </Button>
-                            </>
-                        )}
-                        {status === 'accepted' && (
-                            <Button
-                                sx={{ ml: 1 }} color="primary"
-                                onClick={() => updateStatus(hire._id, 'completed')}
-                            >
-                                Mark as Completed
-                            </Button>
-                        )}
-                    </ButtonGroup>
-                )}
-            </Box>
-        ));
-    };
-
-
-    // Function to render list items for recruiter
-    const renderRecHiringList = (status) => {
-        const list =
-            status === 'sent'
-                ? hirings
-                : status === 'accepted'
-                    ? filterByStatus('accepted')
-                    : filterByStatus('completed');
-
-        if (list.length === 0) return <Typography>No requests in this category.</Typography>;
-
-        return list.map((hire) => (
-
-            <Box key={hire._id} sx={{ border: '1px solid #ccc', borderRadius: 2, p: 2, mb: 1 }}>
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                    <Avatar src={hire.candidate?.image} alt={hire.candidate?.name || 'C'} />
-                    <Typography variant="body1" fontWeight="bold">
-                        To: {hire.candidate?.name || 'Unknown Candidate'}
-                    </Typography>
-                </Stack>
-                <Typography variant="body2">Role: {hire.role}</Typography>
-                <Typography variant="body2">Rate: {hire.rate}</Typography>
-                <Typography variant="body2">Duration: {hire.duration}</Typography>
-                {hire.status === 'accepted' ? (
-                    <Typography variant="body2">   Email: {hire.candidate.email}</Typography>
-                ) : null}
-                <Typography variant="body2" sx={{ mb: 1 }}>
-                    Message: {hire.message}
-                </Typography>
-
-                <Chip
-                    label={hire.status?.toUpperCase() || 'UNKNOWN'}
-                    color={
-                        hire.status === 'pending'
-                            ? 'warning'
-                            : hire.status === 'accepted'
-                                ? 'success'
-                                : hire.status === 'rejected'
-                                    ? 'error'
-                                    : hire.status === 'completed'
-                                        ? 'primary'
-                                        : 'info'
-                    }
-                />
- 
-                {/* Pay button only in accepted tab */}
-                {hire.status === 'accepted' && (
-                    <PaymentButton
-                        data={hire}
-                        type="hire"
-                        disabled={hire.paid === true}
-                        buttonText={hire.paid ? "Paid" : "Pay Now"}
-                    />
-                )}
-            </Box>
-        ));
-    };
+  const renderHiringCard = (hire, status) => {
+    const otherParty = isRecruiter ? hire.candidate : hire.recruiter;
+    const currentStatus = isRecruiter && status === 'sent' ? hire.status : status;
 
     return (
-        <Card sx={{ mt: 4, borderRadius: 3, boxShadow: 3 }}>
-            <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography
-                        variant="h4"
-                        sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}
-                    >
-                        <SwapHoriz fontSize="large" />
-                        {isRecruiter ? 'Sent Hiring Requests' : 'Hiring Requests Received'}
-                    </Typography>
-                </Box>
+      <div key={hire._id} className="w-full p-6 bg-white rounded-xl shadow-sm border border-gray-100 mb-4">
+        <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
+          <div className="flex items-center gap-4 flex-1">
+            <Avatar
+              src={otherParty?.image}
+              sx={{ width: 48, height: 48 }}
+            />
+            <div>
+              <h3 className="font-semibold text-gray-800">
+                {otherParty?.name || 'Unknown'}
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">{hire.message}</p>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap gap-2">
+            <span className={`text-xs font-semibold px-3 py-1 rounded-full ${statusColors[currentStatus] || statusColors.default}`}>
+              {currentStatus?.toUpperCase() || 'UNKNOWN'}
+            </span>
+            {currentStatus === 'accepted' && (
+              <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                hire.paid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+              }`}>
+                {hire.paid ? 'PAID' : 'PENDING PAYMENT'}
+              </span>
+            )}
+          </div>
+        </div>
 
-                <Tabs value={tabIndex} onChange={handleTabChange} sx={{ mb: 2 }}>
-                    {(isRecruiter ? recTabs : devTabs).map((tab, i) => (
-                        <Tab key={tab.label} label={tab.label} />
-                    ))}
-                </Tabs>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 mb-4">
+          <div>
+            <p className="font-medium text-gray-500">Role</p>
+            <p>{hire.role}</p>
+          </div>
+          <div>
+            <p className="font-medium text-gray-500">Duration</p>
+            {hire.duration ? `${hire.duration} weeks` : 'Duration not specified'}
+          </div>
+          <div>
+            <p className="font-medium text-gray-500">Rate</p>
+            <p>₹{hire.rate}</p>
+          </div>
+          {(currentStatus === 'accepted' || currentStatus === 'completed') && (
+            <div>
+              <p className="font-medium text-gray-500">Contact Email</p>
+              <p>{otherParty?.email || 'Not available'}</p>
+            </div>
+          )}
+        </div>
 
-                <Divider sx={{ mb: 2 }} />
-
-              {/* Render content by role and tab */}
-                {(isRecruiter ? recTabs : devTabs).map((tab, i) => (
-                    tabIndex === i && (
-                        <Box key={tab.label}>
-                            <Box
-                                display="flex"
-                                justifyContent="space-between"
-                                alignItems="center"
-                                mb={1}
-                                sx={{
-                                    color:
-                                        tab.status === 'pending'
-                                            ? 'warning.main'
-                                            : tab.status === 'accepted'
-                                                ? 'success.main'
-                                                : 'primary.main',
-                                }}
-                            >
-                                <Typography variant="h6" fontWeight="bold" sx={{ fontSize: '1.2rem' }}>
-                                    {isRecruiter
-                                        ? tab.status === 'sent'
-                                            ? 'You are viewing sent requests.'
-                                            : tab.status === 'accepted'
-                                                ? 'Accepted requests, waiting for payment/completion.'
-                                                : 'Completed hiring requests.'
-                                        : tab.status === 'pending'
-                                            ? 'You are viewing pending requests.'
-                                            : tab.status === 'accepted'
-                                                ? 'Accepted requests, waiting for completion.'
-                                                : 'Completed hiring requests.'}
-                                </Typography>
-                                <Button
-                                    onClick={() => toggleTabExpansion(i)}
-                                    size="small"
-                                    variant="outlined"
-                                    color={
-                                        tab.status === 'pending'
-                                            ? 'warning'
-                                            : tab.status === 'accepted'
-                                                ? 'success'
-                                                : 'primary'
-                                    }
-                                    sx={{ minWidth: 0, p: 0.5 }}
-                                >
-                                    {expandedTabs[i] ? <ExpandLess /> : <ExpandMore />}
-                                </Button>
-                            </Box>
-
-                            {expandedTabs[i] && (
-                                isRecruiter
-                                    ? renderRecHiringList(tab.status)
-                                    : renderDevHiringList(filterByStatus(tab.status), tab.status)
-                            )}
-                        </Box>
-                    )
-                ))}
-            </CardContent>
-        </Card>
+        <div className="flex flex-wrap justify-end gap-3">
+          {isDeveloper && currentStatus === 'pending' && (
+            <>
+              <button
+                onClick={() => updateStatus(hire._id, 'rejected')}
+                className="px-4 py-2 text-sm font-medium bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                disabled={actionLoading === hire._id}
+              >
+                Reject
+              </button>
+              <button
+                onClick={() => updateStatus(hire._id, 'accepted')}
+                className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                disabled={actionLoading === hire._id}
+              >
+                Accept
+              </button>
+            </>
+          )}
+          {isDeveloper && currentStatus === 'accepted' && (
+            <button
+              onClick={() => updateStatus(hire._id, 'completed')}
+              className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              disabled={actionLoading === hire._id}
+            >
+              Mark as Completed
+            </button>
+          )}
+          {isRecruiter && currentStatus === 'accepted' && (
+            <PaymentButton
+              data={hire}
+              type="hire"
+              disabled={hire.paid === true}
+              buttonText={hire.paid ? 'Paid' : 'Pay Now'}
+              className="px-4 py-2 text-sm font-medium"
+            />
+          )}
+        </div>
+      </div>
     );
+  };
+
+  if (!isRecruiter && !isDeveloper) return null;
+
+  if (loading) return (
+    <div className="w-full p-6 bg-white rounded-xl shadow-sm border border-gray-100">
+      <div className="text-center py-8 text-gray-500">Loading hiring requests...</div>
+    </div>
+  );
+
+  return (
+    <div className="w-full">
+      <div className="w-full p-6 bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+        <h1 className="text-xl font-bold mb-6 flex items-center gap-3 text-gray-800">
+          {isRecruiter ? (
+            <Business className="text-2xl text-blue-600" />
+          ) : (
+            <Work className="text-2xl text-blue-600" />
+          )}
+          {isRecruiter ? 'Sent Hiring Requests' : 'Hiring Requests Received'}
+        </h1>
+
+        <div className="flex overflow-x-auto border-b border-gray-200 mb-6">
+          {tabs.map((tab, idx) => (
+            <button
+              key={idx}
+              onClick={() => setTabIndex(idx)}
+              className={`px-6 py-3 whitespace-nowrap border-b-2 text-sm font-medium transition-all ${
+                tabIndex === idx
+                  ? 'border-blue-600 text-blue-600'
+                  : 'text-gray-500 hover:text-blue-600 border-transparent'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {tabs.map((tab, i) => (
+          <div key={i} className="mb-6">
+            {tabIndex === i && (
+              <>
+                <div
+                  className="flex items-center justify-between cursor-pointer mb-4 p-3 bg-gray-50 rounded-lg"
+                  onClick={() => toggleTabExpansion(i)}
+                >
+                  <h2 className="text-sm font-semibold text-gray-700">
+                    {tab.status.toUpperCase()} REQUESTS
+                  </h2>
+                  {expandedTabs[i] ? (
+                    <IoChevronUp className="text-gray-500" />
+                  ) : (
+                    <IoChevronDown className="text-gray-500" />
+                  )}
+                </div>
+                {expandedTabs[i] && (
+                  <div className="space-y-4">
+                    {(isRecruiter && tab.status === 'sent' ? hirings : filterByStatus(tab.status)).length > 0 ? (
+                      (isRecruiter && tab.status === 'sent' ? hirings : filterByStatus(tab.status)).map((hire) =>
+                        renderHiringCard(hire, tab.status)
+                      )
+                    ) : (
+                      <div className="text-sm text-gray-500 italic p-4 bg-gray-50 rounded-lg">
+                        No {tab.status.toLowerCase()} requests found.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 export default HiringStatusCard;

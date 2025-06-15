@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Paper, Tabs, Tab, CircularProgress, Button, Typography,} from '@mui/material';
 import { useAuth } from '../../context/authContext.jsx';
 import ProfileTab from './profileTab.jsx';
 import ConnectionsTab from './connectionTab.jsx';
 import PostComponent from '../posts/postComponent.jsx';
+
 const Dashboard = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -12,82 +12,74 @@ const Dashboard = () => {
   const [showCreate, setShowCreate] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
-      navigate('/login');
-    }
-  }, [loading, user, navigate , activeTab]);
-
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-    setShowCreate(false); 
-  };
+    if (!loading && !user) navigate('/login');
+  }, [loading, user]);
 
   if (loading || !user) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-        }}
-      >
-        <CircularProgress size={60} />
-      </Box>
+      <div className="flex justify-center items-center h-screen">
+        <div className="w-16 h-16 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
+      </div>
     );
   }
 
+  const isRecruiter = user.role?.toLowerCase() === 'recruiter';
+
   return (
-    <Box sx={{ maxWidth: 1000, mx: 'auto', mt: 4, mb: 4, px: 2 }}>
-      <Paper elevation={3} sx={{ p: 3 }}>
-        <Typography variant="h4" sx={{ mb: 3 }}>
-          Welcome, {user.name || user.email}
-        </Typography>
+    <div className="max-w-6xl mx-auto  bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 shadow-lg">
+      {/* Removed the card wrapper */}
+      <h1 className="text-2xl sm:text-3xl font-semibold text-center mb-6">
+        Welcome, {user.name || user.email}
+      </h1>
 
-        <Tabs
-          value={activeTab}
-          onChange={handleTabChange}
-          indicatorColor="primary"
-          textColor="primary"
-          sx={{ mb: 3 }}
-        >
-          <Tab label="Profile" />
-          {user.role?.toLowerCase() !== 'recruiter' && <Tab label="Connections" />}
-        </Tabs>
+      <div className="flex justify-center mb-6">
+        <div className="flex gap-3">
+          <button
+            onClick={() => { setActiveTab(0); setShowCreate(false); }}
+            className={`px-4 py-2 rounded-full font-semibold transition ${
+              activeTab === 0 ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Profile
+          </button>
+          {!isRecruiter && (
+            <button
+              onClick={() => { setActiveTab(1); setShowCreate(false); }}
+              className={`px-4 py-2 rounded-full font-semibold transition ${
+                activeTab === 1 ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Network & Posts
+            </button>
+          )}
+        </div>
+      </div>
 
-        {activeTab === 0 && (
-          <Box>
-            <ProfileTab user={user} />
-          </Box>
-        )}
+      <div className="transition-all duration-500">
+        {activeTab === 0 && <ProfileTab user={user} />}
 
-        {user.role !=='recruiter' && activeTab === 1 && (
-          <Box>
+        {!isRecruiter && activeTab === 1 && (
+          <div className="space-y-6">
             <ConnectionsTab user={user} />
-
-            <Box sx={{ mt: 3 }}>
-              <Button
-                variant="contained"
+            <div className="text-center">
+              <button
                 onClick={() => setShowCreate(!showCreate)}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-medium"
               >
                 {showCreate ? 'Cancel' : 'Create Post'}
-              </Button>
-            </Box>
-
-            <Box sx={{ mt: 2 }}>
+              </button>
+            </div>
+            <div>
               {showCreate ? (
-                <PostComponent
-                  mode="create"
-                  onPostCreated={() => setShowCreate(false)}
-                />
+                <PostComponent mode="create" onPostCreated={() => setShowCreate(false)} />
               ) : (
                 <PostComponent mode="list" />
               )}
-            </Box>
-          </Box>
+            </div>
+          </div>
         )}
-      </Paper>
-    </Box>
+      </div>
+    </div>
   );
 };
 

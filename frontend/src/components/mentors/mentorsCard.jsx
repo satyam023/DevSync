@@ -1,210 +1,245 @@
 import React, { useEffect, useState } from 'react';
-import {
-    Card, CardContent, Typography, Chip, Divider, Box, CircularProgress, Stack, Button, ButtonGroup, Tabs, Tab, Avatar,
-} from '@mui/material';
+import { Avatar } from '@mui/material';
+import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
+import { School } from '@mui/icons-material';
 import API from '../../utils/axios.jsx';
-import { ExpandLess, ExpandMore, School } from '@mui/icons-material';
 import PaymentButton from '../../components/payment/paymentButton.jsx';
 
 const MentorshipStatusCard = ({ user }) => {
-    const [requests, setRequests] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [actionLoading, setActionLoading] = useState(null);
-    const [tabIndex, setTabIndex] = useState(0);
-    const [expandedTabs, setExpandedTabs] = useState({ 0: true, 1: false, 2: false });
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null);
+  const [tabIndex, setTabIndex] = useState(0);
+  const [expandedTabs, setExpandedTabs] = useState({ 0: true, 1: false, 2: false });
 
-    const role = user.role?.toLowerCase();
-    const isMentor = role === 'mentor';
-    const isLearner = role === 'learner';
-        
-    const toggleTabExpansion = (index) => {
-        setExpandedTabs((prev) => ({ ...prev, [index]: !prev[index] }));
+  const role = user.role?.toLowerCase();
+  const isMentor = role === 'mentor';
+  const isLearner = role === 'learner';
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const endpoint = isMentor ? '/mentor-requests/received' : '/mentor-requests/sent';
+        const res = await API.get(endpoint);
+        setRequests(res.data.requests || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                const endpoint = isMentor ? '/mentor-requests/received' : '/mentor-requests/sent';
-                const res = await API.get(endpoint);
-                setRequests(res.data.requests || []);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, [isMentor, isLearner]);
+    fetchData();
+  }, [isMentor]);
 
+  const updateStatus = async (id, status) => {
+    setActionLoading(id);
+    const routeMap = { accepted: 'accept', rejected: 'reject', completed: 'complete' };
+    const route = routeMap[status];
+    if (!route) return setActionLoading(null);
+    try {
+      await API.patch(`/mentor-requests/${route}/${id}`, { status });
+      setRequests((prev) =>
+        prev.map((r) => (r._id === id ? { ...r, status } : r))
+      );
+    } catch (err) {
+      console.error('Error updating status:', err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
-    const updateStatus = async (id, status) => {
-        setActionLoading(id);
-        const routeMap = {
-            accepted: 'accept',
-            rejected: 'reject',
-            completed: 'complete',
-        };
+  const filterByStatus = (status) =>
+    requests.filter((r) => r.status === status);
 
-        const route = routeMap[status];
-
-        if (!route) {
-            console.error(`Invalid status: ${status}`);
-            setActionLoading(null);
-            return;
-        }
-
-        try {
-            await API.patch(`/mentor-requests/${route}/${id}`, { status });
-            setRequests((prev) =>
-                prev.map((r) => (r._id === id ? { ...r, status } : r))
-            );
-            console.log(`Status updated to ${status}`);
-        } catch (err) {
-            console.error('Error updating status:', err);
-        } finally {
-            setActionLoading(null);
-        }
-    };
-    
-
-    const filterByStatus = (status) => requests.filter((r) => r.status === status);
-
-    const mentorTabs = [
+  const tabs = isMentor
+    ? [
         { label: `Pending (${filterByStatus('pending').length})`, status: 'pending' },
         { label: `Accepted (${filterByStatus('accepted').length})`, status: 'accepted' },
         { label: `Completed (${filterByStatus('completed').length})`, status: 'completed' },
-    ];
-
-    const learnerTabs = [
+      ]
+    : [
         { label: `Sent (${filterByStatus('pending').length})`, status: 'pending' },
         { label: `Accepted (${filterByStatus('accepted').length})`, status: 'accepted' },
         { label: `Completed (${filterByStatus('completed').length})`, status: 'completed' },
-    ];
+      ];
 
+  const toggleTabExpansion = (index) => {
+    setExpandedTabs((prev) => ({ ...prev, [index]: !prev[index] }));
+  };
 
-    const renderMentorList = (list, status) => (
-        list.length === 0 ? (
-            <Typography>No mentorship requests.</Typography>
-        ) : (
-            list.map((req) => (
-                <Box key={req._id} sx={{ border: '1px solid #ccc', borderRadius: 2, p: 2, mb: 1 }}>
-                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-                        <Avatar src={req.learner?.image} />
-                        <Typography><strong>From:</strong> {req.learner?.name}</Typography>
-                    </Stack>
-                    <Typography>Offered Rate: {req.offeredRate || req?.mentor?.rates?.mentor} {`₹/month`}</Typography>
-                    <Typography>Email: {req.learner?.email}</Typography>
-                    <Typography>Message: {req.message}</Typography>
-                    <Chip
-                        label={req.status.toUpperCase()}
-                        color={req.status === 'pending' ? 'warning' : req.status === 'accepted' ? 'success' : 'primary'}
-                    />
-                    {req.status === 'accepted' && (
-                        
-                        <Chip
-                            label={req.paid ? 'Payment Received' : 'Payment Pending'}
-                            color={req.paid ? 'success' : 'warning'}
-                            sx={{ ml: 1 }}
-                        />
+  const renderCard = (req, roleType, status) => (
+    <div
+      key={req._id}
+      className="w-full p-6 bg-white rounded-xl shadow-sm border border-gray-100 mb-4"
+    >
+      <div className="flex flex-col md:flex-row md:items-center gap-4 mb-4">
+        <div className="flex items-center gap-4 flex-1">
+          <Avatar
+            src={roleType === 'mentor' ? req.learner?.image : req.mentor?.image}
+            sx={{ width: 48, height: 48 }}
+          />
+          <div>
+            <h3 className="font-semibold text-gray-800">
+              {roleType === 'mentor' ? req.learner?.name : req.mentor?.name}
+            </h3>
+            <p className="text-sm text-gray-500 mt-1">{req.message}</p>
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-2">
+          <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
+            status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+            status === 'accepted' ? 'bg-green-100 text-green-800' : 
+            'bg-blue-100 text-blue-800'
+          }`}>
+            {status.toUpperCase()}
+          </span>
+          {status === 'accepted' && (
+            <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
+              req.paid ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+            }`}>
+              {req.paid ? 'PAID' : 'PENDING PAYMENT'}
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 mb-4">
+        <div>
+          <p className="font-medium text-gray-500">Email</p>
+          {req.status === 'accepted' || req.status === 'completed' ? (
+            <p>{roleType === 'mentor' ? req.learner?.email : req.mentor?.email}</p>
+          ) : (
+            <p className="text-gray-400 italic">Visible after acceptance</p>
+          )}
+        </div>
+        <div>
+          <p className="font-medium text-gray-500">Offered Rate</p>
+          <p>₹{req.offeredRate || req?.mentor?.rates?.mentor}</p>
+        </div>
+        {roleType === 'learner' && (
+          <div>
+            <p className="font-medium text-gray-500">Default Rate</p>
+            <p>₹{req?.mentor?.rates?.mentor || 'N/A'}</p>
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-wrap justify-end gap-3">
+        {roleType === 'mentor' && status === 'pending' && (
+          <>
+            <button
+              onClick={() => updateStatus(req._id, 'rejected')}
+              className="px-4 py-2 text-sm font-medium bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              disabled={actionLoading === req._id}
+            >
+              Reject
+            </button>
+            <button
+              onClick={() => updateStatus(req._id, 'accepted')}
+              className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              disabled={actionLoading === req._id}
+            >
+              Accept
+            </button>
+          </>
+        )}
+        {roleType === 'mentor' && status === 'accepted' && (
+          <button
+            onClick={() => updateStatus(req._id, 'completed')}
+            className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            disabled={actionLoading === req._id}
+          >
+            Mark as Completed
+          </button>
+        )}
+        {roleType === 'learner' && status === 'accepted' && (
+          <PaymentButton
+            data={{
+              amount: req.offeredRate || req?.mentor?.rates?.mentor,
+              toUserId: req?.mentor?._id,
+              mentorRequestId: req._id,
+            }}
+            type="mentor"
+            disabled={req.paid === true}
+            buttonText={req.paid ? 'Paid' : 'Pay Now'}
+            className="px-4 py-2 text-sm font-medium"
+          />
+        )}
+      </div>
+    </div>
+  );
+
+  if (!isMentor && !isLearner) return null;
+  if (loading) return (
+    <div className="w-full p-6 bg-white rounded-xl shadow-sm border border-gray-100">
+      <div className="text-center py-8 text-gray-500">Loading mentorship requests...</div>
+    </div>
+  );
+
+  return (
+    <div className="w-full">
+      <div className="w-full p-6 bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+        <h1 className="text-xl font-bold mb-6 flex items-center gap-3 text-gray-800">
+          <School className="text-2xl text-blue-600" />
+          {isMentor ? 'Mentorship Requests Received' : 'Mentorship Requests Sent'}
+        </h1>
+
+        <div className="flex overflow-x-auto border-b border-gray-200 mb-6">
+          {tabs.map((tab, idx) => (
+            <button
+              key={idx}
+              onClick={() => setTabIndex(idx)}
+              className={`px-6 py-3 whitespace-nowrap border-b-2 text-sm font-medium transition-all ${
+                tabIndex === idx
+                  ? 'border-blue-600 text-blue-600'
+                  : 'text-gray-500 hover:text-blue-600 border-transparent'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {tabs.map((tab, i) => (
+          <div key={i} className="mb-6">
+            {tabIndex === i && (
+              <>
+                <div
+                  className="flex items-center justify-between cursor-pointer mb-4 p-3 bg-gray-50 rounded-lg"
+                  onClick={() => toggleTabExpansion(i)}
+                >
+                  <h2 className="text-sm font-semibold text-gray-700">
+                    {tab.status.toUpperCase()} REQUESTS
+                  </h2>
+                  {expandedTabs[i] ? (
+                    <IoChevronUp className="text-gray-500" />
+                  ) : (
+                    <IoChevronDown className="text-gray-500" />
+                  )}
+                </div>
+                {expandedTabs[i] && (
+                  <div className="space-y-4">
+                    {filterByStatus(tab.status).length > 0 ? (
+                      filterByStatus(tab.status).map((req) =>
+                        renderCard(req, isMentor ? 'mentor' : 'learner', tab.status)
+                      )
+                    ) : (
+                      <div className="text-sm text-gray-500 italic p-4 bg-gray-50 rounded-lg">
+                        No {tab.status.toLowerCase()} requests found.
+                      </div>
                     )}
-                    <ButtonGroup sx={{ mt: 1 }} size="small">
-                        {status === 'pending' && (
-                            <>
-                                <Button onClick={() => updateStatus(req._id, 'accepted')}   sx={{ml:1}} color="success">Accept</Button>
-                                <Button onClick={() => updateStatus(req._id, 'rejected')}   sx={{ml:1}} color="error">Reject</Button>
-                            </>
-                        )}
-                        {status === 'accepted' && (
-                            <Button onClick={() => updateStatus(req._id, 'completed')}  sx={{ml:1}}  color="primary">Mark as Completed</Button>
-                        )}
-                    </ButtonGroup>
-                </Box>
-            ))
-        )
-    );
-
-    const renderLearnerList = (list, status) => (
-        list.length === 0 ? (
-            <Typography>No mentorship requests.</Typography>
-        ) : (
-            list.map((req) => (
-                <Box key={req._id} sx={{ border: '1px solid #ccc', borderRadius: 2, p: 2, mb: 1 }}>
-                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-                        <Avatar src={req.mentor?.image} />
-                        <Typography><strong>To:</strong> {req.mentor?.name}</Typography>
-                    </Stack >
-                    <Typography>  Rates: {req?.mentor?.rates?.mentor || "Not specified"} {`₹/month`}</Typography>
-                    <Typography>Offered Rate: {req.offeredRate || req?.mentor?.rates?.mentor}{`₹/month`} </Typography>
-                    {status === 'accepted' && (
-                        <Typography>Email: {req.mentor?.email}</Typography>
-                    )}
-                    <Typography>Message: {req.message}</Typography>
-                    <Chip
-                        label={req.status.toUpperCase()}
-                        color={req.status === 'pending' ? 'warning' : req.status === 'accepted' ? 'success' : 'primary'}
-                    />
-                    {status === 'accepted' && (
-                        <PaymentButton
-                            data={{
-                                amount: req.offeredRate || req?.mentor?.rates?.mentor,
-                                toUserId: req?.mentor?._id,
-                                 mentorRequestId: req._id,
-                            }}
-                            type="mentor"
-                            disabled={req.paid == true}
-                            buttonText={req.paid ? "Paid" : "Pay Now"}
-                        />
-
-                    )}
-                </Box>
-            ))
-        )
-    );
-
-    if (!isMentor && !isLearner) return null;
-    if (loading) return <CircularProgress sx={{ m: 2 }} />;
-
-    return (
-        <Card sx={{ mt: 4, borderRadius: 3, boxShadow: 3 }}>
-            <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <School fontSize="large" />
-                        {isMentor ? 'Mentorship Requests Received' : 'Mentorship Requests Sent'}
-                    </Typography>
-                </Box>
-
-                <Tabs value={tabIndex} onChange={(e, val) => setTabIndex(val)} sx={{ mb: 2 }}>
-                    {(isMentor ? mentorTabs : learnerTabs).map((tab, i) => (
-                        <Tab key={i} label={tab.label} />
-                    ))}
-                </Tabs>
-
-                <Divider sx={{ mb: 2 }} />
-
-                {(isMentor ? mentorTabs : learnerTabs).map((tab, i) => (
-                    tabIndex === i && (
-                        <Box key={tab.label}>
-                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                                <Typography variant="h6" fontWeight="bold">
-                                    {tab.status.toUpperCase()} Requests
-                                </Typography>
-                                <Button onClick={() => toggleTabExpansion(i)} size="small">
-                                    {expandedTabs[i] ? <ExpandLess /> : <ExpandMore />}
-                                </Button>
-                            </Box>
-                            {expandedTabs[i] && (
-                                isMentor
-                                    ? renderMentorList(filterByStatus(tab.status), tab.status)
-                                    : renderLearnerList(filterByStatus(tab.status), tab.status)
-                            )}
-                        </Box>
-                    )
-                ))}
-            </CardContent>
-        </Card>
-    );
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 export default MentorshipStatusCard;

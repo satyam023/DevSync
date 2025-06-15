@@ -1,20 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Card,
-  Avatar,
-  Typography,
-  Box,
-  Chip,
-  Divider,
-  Button,
-  CircularProgress,
-  Tooltip
-} from '@mui/material';
-import FollowButton from '../followComponent/followButton.jsx';
 import { useAuth } from '../../context/authContext.jsx';
-import { SwapHoriz, WorkOutline } from '@mui/icons-material'; // Added WorkOutline icon
-import SendRequestForm from '../hiring/sendRequestForm.jsx';
+import FollowButton from '../followComponent/followButton.jsx';
+import { FiUsers, FiUserPlus } from 'react-icons/fi';
+
 const UserCard = ({ user, onUserUpdate }) => {
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
@@ -22,22 +11,9 @@ const UserCard = ({ user, onUserUpdate }) => {
   const [following, setFollowing] = useState(user.following || []);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
+
   const isRecruiter = currentUser?.role?.toLowerCase() === 'recruiter';
   const isUserRecruiter = user?.role?.toLowerCase() === 'recruiter';
-
-  if (!user || !user._id || currentUser?._id === user._id) {
-    return (
-      <div className="border rounded p-4 bg-gray-50">
-        <div className="animate-pulse flex space-x-4">
-          <div className="rounded-full bg-gray-300 h-10 w-10"></div>
-          <div className="flex-1 space-y-2">
-            <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-300 rounded"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   useEffect(() => {
     if (currentUser?._id && user) {
@@ -51,11 +27,22 @@ const UserCard = ({ user, onUserUpdate }) => {
     setLoading(false);
   }, [currentUser?._id, user]);
 
+  if (!user || !user._id || currentUser?._id === user._id) {
+    return (
+      <div className="border rounded-md p-4 bg-gray-100 animate-pulse w-full">
+        <div className="flex gap-4">
+          <div className="w-12 h-12 rounded-full bg-gray-300"></div>
+          <div className="flex flex-col gap-2 w-full">
+            <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const handleFollowSuccess = (newStatus) => {
-    if (!currentUser || !currentUser._id) {
-      console.warn("Missing currentUser or currentUser._id in handleFollowSuccess");
-      return;
-    }
+    if (!currentUser || !currentUser._id) return;
 
     setIsFollowing(newStatus);
     setFollowers(prev =>
@@ -64,184 +51,129 @@ const UserCard = ({ user, onUserUpdate }) => {
         : prev.filter(id => id.toString() !== currentUser._id.toString())
     );
 
-    if (onUserUpdate) onUserUpdate();
+    onUserUpdate?.();
   };
 
-  const handleViewProfile = () => {
-    navigate(`/profile/${user._id}`);
-  };
+  const handleViewProfile = () => navigate(`/profile/${user._id}`);
 
-  const handleSkillExchange = () => {
-    navigate(`/skill-exchange`, {
-      state: {
-        recipientId: user._id,
-        recipientName: user.name,
-        recipientSkills: user.skills || []
-      }
-    });
-  };
+  const handleSkillExchange = () => navigate(`/skill-exchange`, {
+    state: {
+      recipientId: user._id,
+      recipientName: user.name,
+      recipientSkills: user.skills || []
+    }
+  });
 
-  const handleHireClick = () => {
-    navigate(`/hire/${user._id}`, {
-      state: {
-        recipientName: user.name,
-        recipientRole: user.role,
-        recipientSkills: user.skills,
-      }
-    });
-  };
+  const handleHireClick = () => navigate(`/hire/${user._id}`, {
+    state: {
+      recipientName: user.name,
+      recipientRole: user.role,
+      recipientSkills: user.skills
+    }
+  });
 
-  const handleMentorClick = () => {
-    navigate(`/mentor/${user._id}`, {
-      state: {
-        mentorName: user.name,
-        mentorRole: user.role,
-        mentorSkills: user.skills,
-      }
-    });
-  };
-
+  const handleMentorClick = () => navigate(`/mentor/${user._id}`, {
+    state: {
+      mentorName: user.name,
+      mentorRole: user.role,
+      mentorSkills: user.skills
+    }
+  });
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" p={3}>
-        <CircularProgress size={24} />
-      </Box>
+      <div className="flex justify-center p-4">
+        <div className="w-6 h-6 border-4 border-blue-500 border-dashed rounded-full animate-spin"></div>
+      </div>
     );
   }
 
   return (
-    <Card sx={{
-      width: '100%',
-      p: 3,
-      borderRadius: 2,
-      boxShadow: 3,
-      position: 'relative'
-    }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-        <Avatar
+    <div className="w-full bg-white rounded-xl shadow-md p-4 relative">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row items-center gap-4 mb-4">
+        <img
           src={user.image}
           alt={user.name}
-          sx={{ width: 72, height: 72, border: '2px solid #1976d2' }}
+          className="w-16 h-16 rounded-full border-2 border-blue-500 object-cover"
         />
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h6" fontWeight="bold">{user.name}</Typography>
-          <Typography variant="body2" color="text.secondary">
-            {user.bio || 'No bio available'}
-          </Typography>
+        <div className="text-center sm:text-left flex-1">
+          <h2 className="text-lg font-semibold">{user.name}</h2>
+          <p className="text-sm text-gray-600">{user.bio || 'No bio available'}</p>
           {user.role && (
-            <Chip
-              label={user.role}
-              size="small"
-              sx={{ mt: 1 }}
-              color={user.role.toLowerCase() === 'recruiter' ? 'secondary' : 'primary'}
-            />
+            <span className={`inline-block mt-1 text-xs font-semibold px-2 py-0.5 rounded 
+              ${user.role.toLowerCase() === 'recruiter' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+              {user.role}
+            </span>
           )}
-        </Box>
-      </Box>
+        </div>
+      </div>
 
-      {/* Follow Info - Hidden for recruiters */}
+      {/* Follow stats */}
       {!isUserRecruiter && (
-        <Box sx={{
-          position: 'absolute',
-          top: 16,
-          right: 16,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.5,
-          backgroundColor: 'rgba(25, 118, 210, 0.1)',
-          borderRadius: 2,
-          px: 2,
-          py: 1,
-        }}>
-          <Typography variant="caption" fontWeight="bold">
-            Followers: {followers.length}
-          </Typography>
-          <Divider orientation="vertical" flexItem />
-          <Typography variant="caption" fontWeight="bold">
-            Following: {following.length}
-          </Typography>
-        </Box>
+        <div className="absolute top-4 right-4 bg-blue-50 text-xs font-medium text-blue-700 px-3 py-1 rounded flex items-center gap-2">
+          <span className="hidden sm:inline">Followers:</span>
+          <FiUsers className="sm:hidden" />
+          <span>{followers.length}</span>
+          <span className="hidden sm:inline">| Following:</span>
+          <FiUserPlus className="sm:hidden" />
+          <span>{following.length}</span>
+        </div>
       )}
 
-      <Divider sx={{ my: 2 }} />
-
-      {/* Skills Section */}
+      {/* Skills (only for recruiters) */}
       {user.skills?.length > 0 && isUserRecruiter && (
-        <Box sx={{ mb: 2 }}>
-          <Typography variant="subtitle2" color="text.secondary">Skills:</Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-            {user.skills.map((skill, index) => (
-              <Chip key={index} label={skill} size="small" />
+        <div className="mb-3">
+          <p className="text-sm text-gray-500 font-medium">Skills:</p>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {user.skills.map((skill, i) => (
+              <span key={i} className="text-xs px-2 py-1 bg-gray-200 rounded-full">
+                {skill}
+              </span>
             ))}
-          </Box>
-        </Box>
+          </div>
+        </div>
       )}
 
       {/* Action Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-        <Button
-          variant="outlined"
-          size="small"
+      <div className="flex flex-wrap gap-2 justify-end mt-3">
+        <button
           onClick={handleViewProfile}
-          sx={{ textTransform: 'none' }}
+          className="px-4 py-1.5 text-sm rounded-md border border-gray-300 hover:bg-gray-100"
         >
           View Profile
-        </Button>
+        </button>
 
-        {currentUser?.id !== user._id && (
+        {currentUser?._id !== user._id && (
           <>
-            {/* Hide exchange button for recruiters */}
             {!isUserRecruiter && !isRecruiter && (
-              <Tooltip title="Initiate skill exchange">
-                <Button
-                  variant="contained"
-                  size="small"
-                  color="secondary"
-                  startIcon={<SwapHoriz />}
-                  onClick={handleSkillExchange}
-                  disabled={!user.skills?.length}
-                  sx={{ textTransform: 'none' }}
-                >
-                  Exchange
-                </Button>
-              </Tooltip>
+              <button
+                onClick={handleSkillExchange}
+                disabled={!user.skills?.length}
+                className="px-4 py-1.5 text-sm rounded-md bg-yellow-100 hover:bg-yellow-200 text-yellow-800 disabled:opacity-50"
+              >
+                Exchange
+              </button>
             )}
 
-            {/* Show hire button for recruiters viewing non-recruiters */}
-
-
             {isRecruiter && !isUserRecruiter && (
-              <Tooltip title="Hire this candidate">
-                <Button
-                  variant="contained"
-                  size="small"
-                  color="success"
-                  startIcon={<WorkOutline />}
-                  onClick={handleHireClick}  // <-- Show form here
-                  sx={{ textTransform: 'none' }}
-                >
-                  Hire
-                </Button>
-              </Tooltip>
+              <button
+                onClick={handleHireClick}
+                className="px-4 py-1.5 text-sm rounded-md bg-green-600 hover:bg-green-700 text-white"
+              >
+                Hire
+              </button>
             )}
 
             {currentUser?.role === 'learner' && user?.role === 'mentor' && (
-              <Tooltip title="Request Mentorship">
-                <Button
-                  variant="contained"
-                  size="small"
-                  color="info"
-                  startIcon={<WorkOutline/>}
-                  onClick={handleMentorClick}
-                  sx={{ textTransform: 'none' }}
-                >
-                  Take Mentorship
-                </Button>
-              </Tooltip>
+              <button
+                onClick={handleMentorClick}
+                className="px-4 py-1.5 text-sm rounded-md bg-sky-600 hover:bg-sky-700 text-white"
+              >
+                Take Mentorship
+              </button>
             )}
 
-            {/* Hide follow button for recruiters */}
             {!isUserRecruiter && (
               <FollowButton
                 targetUserId={user._id}
@@ -251,9 +183,8 @@ const UserCard = ({ user, onUserUpdate }) => {
             )}
           </>
         )}
-      </Box>
-
-    </Card>
+      </div>
+    </div>
   );
 };
 

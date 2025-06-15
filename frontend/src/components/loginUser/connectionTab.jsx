@@ -1,280 +1,202 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Avatar, Typography, Grid, Card, CardContent, List, ListItem,
-  ListItemAvatar, ListItemText, Box, Button, Divider, Chip, CircularProgress
-  , Collapse
-} from '@mui/material';
-import {
   People as FollowersIcon,
   PersonAdd as FollowIcon,
   PersonRemove as UnfollowIcon
 } from '@mui/icons-material';
 import API from '../../utils/axios';
 import { useSnackbar } from 'notistack';
-import { deepPurple, green } from '@mui/material/colors';
 import { useAuth } from '../../context/authContext';
 
 const ConnectionsTab = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useAuth();
 
-  const [state, setState] = useState({
-    followers: [],
-    following: [],
-    loading: true
-  });
-
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [followersExpanded, setFollowersExpanded] = useState(false);
   const [followingExpanded, setFollowingExpanded] = useState(false);
 
   const fetchConnections = async () => {
-    try {
-      setState(prev => ({ ...prev, loading: true }));
+    if (!user?._id) return;
 
+    try {
+      setLoading(true);
       const [followersRes, followingRes] = await Promise.all([
         API.get(`/users/${user._id}/followers`, { withCredentials: true }),
-        API.get(`/users/${user._id}/following`, { withCredentials: true })
+        API.get(`/users/${user._id}/following`, { withCredentials: true }),
       ]);
 
-      const followers = followersRes.data.followers || [];
-      const following = followingRes.data.following || [];
-      const followersWithFollowState = followers.map(f => ({
+      const fetchedFollowers = followersRes.data.followers || [];
+      const fetchedFollowing = followingRes.data.following || [];
+
+      const followersWithStatus = fetchedFollowers.map(f => ({
         ...f,
-        isFollowing: following.some(u => u._id === f._id),
+        isFollowing: fetchedFollowing.some(u => u._id === f._id),
       }));
 
-      setState({
-        followers: followersWithFollowState,
-        following,
-        loading: false,
-      });
-    } catch (error) {
-      console.error('Error fetching connections:', error);
+      setFollowers(followersWithStatus);
+      setFollowing(fetchedFollowing);
+    } catch (err) {
+      console.error('Error fetching connections:', err);
       enqueueSnackbar('Failed to load connections', { variant: 'error' });
-      setState(prev => ({ ...prev, loading: false }));
+    } finally {
+      setLoading(false);
     }
   };
 
-
-  const handleFollowAction = async (targetUserId, isCurrentlyFollowing) => {
+  const handleFollowToggle = async (targetUserId, currentlyFollowing) => {
     try {
       await API.post(`/users/follow/${targetUserId}`, {}, { withCredentials: true });
 
       enqueueSnackbar(
-        isCurrentlyFollowing ? 'Successfully unfollowed' : 'Successfully followed',
+        currentlyFollowing ? 'Unfollowed successfully' : 'Followed successfully',
         { variant: 'success' }
       );
-      setState(prev => {
-        const updatedFollowers = prev.followers.map(user => {
-          if (user._id === targetUserId) {
-            return { ...user, isFollowing: !isCurrentlyFollowing };
-          }
-          return user;
-        });
 
-        let updatedFollowing = [...prev.following];
-        if (isCurrentlyFollowing) {
-          updatedFollowing = updatedFollowing.filter(u => u._id !== targetUserId);
-        } else {
-          const followedUser = prev.followers.find(u => u._id === targetUserId);
-          if (followedUser) {
-            updatedFollowing = [...updatedFollowing, { ...followedUser, isFollowing: true }];
-          }
+      setFollowers(prev =>
+        prev.map(u =>
+          u._id === targetUserId ? { ...u, isFollowing: !currentlyFollowing } : u
+        )
+      );
+
+      if (currentlyFollowing) {
+        setFollowing(prev => prev.filter(u => u._id !== targetUserId));
+      } else {
+        const followedUser = followers.find(u => u._id === targetUserId);
+        if (followedUser) {
+          setFollowing(prev => [...prev, { ...followedUser, isFollowing: true }]);
         }
-
-        return {
-          ...prev,
-          followers: updatedFollowers,
-          following: updatedFollowing,
-        };
-      });
-
-    } catch (error) {
-      console.error('Follow action error:', error);
+      }
+    } catch (err) {
+      console.error('Follow toggle failed:', err);
       enqueueSnackbar('Failed to update follow status', { variant: 'error' });
     }
   };
 
+  useEffect(() => {
+    fetchConnections();
 
-useEffect(() => {
-  if (user && user._id) {
-    fetchConnections(); 
-    let count = 0;
-    const maxRefreshCount = 2;
-    const intervalId = setInterval(() => {
-      count++;
-      if (count > maxRefreshCount) {
-        clearInterval(intervalId);
-      } else {
-        fetchConnections();
-      }
+    let refreshCount = 0;
+    const maxRefreshes = 1;
+    const interval = setInterval(() => {
+      if (++refreshCount > maxRefreshes) return clearInterval(interval);
+      fetchConnections();
     }, 3000);
-    return () => clearInterval(intervalId); 
-  }
-}, [user]);
 
+    return () => clearInterval(interval);
+  }, [user]);
 
-  const renderUserItem = (otherUser, isFollowingList = false) => {
-      if (otherUser.role === 'recruiter') return null;
-    const isCurrentUser = otherUser._id === user._id;
-    const isFollowing = isFollowingList || otherUser.isFollowing;
+  const renderUser = (u, isFromFollowingList = false) => {
+    if (u.role === 'recruiter') return null;
+    const isSelf = u._id === user._id;
+    const isFollowing = isFromFollowingList || u.isFollowing;
+
     return (
-      <ListItem
-        key={otherUser._id}
-        sx={{
-          py: 1.5,
-          px: 2,
-          '&:hover': { backgroundColor: 'action.hover', borderRadius: 2 },
-          mb: 1
-        }}
-        secondaryAction={
-          !isCurrentUser && (
-            <Button
-              variant={isFollowing ? 'outlined' : 'contained'}
-              size="small"
-              startIcon={isFollowing ? <UnfollowIcon /> : <FollowIcon />}
-              onClick={() => handleFollowAction(otherUser._id, isFollowing)}
-              sx={{
-                textTransform: 'none',
-                borderRadius: 20,
-                px: 2,
-                fontSize: 12
-              }}
-              color={isFollowing ? 'error' : 'primary'}
-            >
-              {isFollowing ? 'Unfollow' : 'Follow'}
-            </Button>
-          )
-        }
+      <li
+        key={u._id}
+        className="flex justify-between items-center px-3 py-2 hover:bg-gray-100 rounded-lg mb-1"
       >
-        <ListItemAvatar>
-          <Avatar
-            src={otherUser.image}
-            sx={{
-              bgcolor: deepPurple[500],
-              width: 48,
-              height: 48
-            }}
+        <div className="flex items-center gap-3">
+          <img
+            src={u.image || ''}
+            alt="avatar"
+            className="w-12 h-12 rounded-full object-cover bg-purple-300"
+          />
+          <div>
+            <p className="font-medium text-sm text-gray-900">{u.name || 'Unknown User'}</p>
+            {['mentor', 'developer', 'learner'].includes(u.role) && (
+              <span className="text-[10px] bg-green-100 text-green-800 px-2 py-[2px] rounded-full">
+                {u.role.charAt(0).toUpperCase() + u.role.slice(1)}
+              </span>
+            )}
+          </div>
+        </div>
+        {!isSelf && (
+          <button
+            onClick={() => handleFollowToggle(u._id, isFollowing)}
+            className={`text-xs px-3 py-1 font-medium rounded-full border transition ${isFollowing
+                ? 'text-red-600 border-red-500 hover:bg-red-100'
+                : 'text-white bg-blue-600 border-blue-600 hover:bg-blue-700'
+              }`}
           >
-            {otherUser.name?.charAt(0) || '?'}
-          </Avatar>
-        </ListItemAvatar>
-        <ListItemText
-          primary={
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="subtitle1" fontWeight="medium">
-                {otherUser.name || 'Unknown User'}
-              </Typography>
-              {(
-                otherUser.role === 'mentor' ||
-                otherUser.role === 'developer' ||
-                otherUser.role === 'learner'
-              ) && (
-                  <Chip
-                    label={otherUser.role.charAt(0).toUpperCase() + otherUser.role.slice(1)} // Dynamic label
-                    size="small"
-                    sx={{
-                      bgcolor: green[100],
-                      color: green[800],
-                      height: 15,
-                      fontSize: '0.50rem'
-                    }}
-                  />
-                )}
-
-            </Box>
-          }
-          sx={{ ml: 1 }}
-        />
-      </ListItem>
+            {isFollowing ? (
+              <span className="flex items-center gap-1">
+                <UnfollowIcon fontSize="small" /> Unfollow
+              </span>
+            ) : (
+              <span className="flex items-center gap-1">
+                <FollowIcon fontSize="small" /> Follow
+              </span>
+            )}
+          </button>
+        )}
+      </li>
     );
   };
 
- if (state.loading) {
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center py-10">
+        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <p className="mt-4 text-gray-600">Loading connections...</p>
+      </div>
+    );
+  }
+
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 4 }}>
-      <CircularProgress />
-      <Typography variant="body1" sx={{ mt: 2 }}>
-        Loading followers and following...
-      </Typography>
-    </Box>
-  );
-}
-  return (
-    <Box sx={{ p: { xs: 1, md: 3 } }}>
-      <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
-        My Network
-      </Typography>
+    <div className="px-4 md:px-8">
+      <h2 className="text-xl md:text-2xl font-bold mb-6">My Network</h2>
 
-      <Grid container spacing={3}>
-        {/* Followers */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ borderRadius: 2, mx: 'auto', width: 400 }}>
-            <CardContent>
-              <Box
-                sx={{ display: 'flex', alignItems: 'center', mb: 2, cursor: 'pointer' }}
-                onClick={() => setFollowersExpanded(prev => !prev)}
-              >
+      <div className="flex flex-col md:flex-row gap-6 items-start">
+        {/* Followers Card */}
+        <div className="bg-white shadow-md rounded-xl p-4 w-full md:w-1/2">
+          <div
+            className="flex items-center cursor-pointer mb-2"
+            onClick={() => setFollowersExpanded(prev => !prev)}
+          >
+            <FollowersIcon className="text-blue-500 mr-2" />
+            <p className="font-medium">
+              Followers ({followers.length}) {followersExpanded ? '▲' : '▼'}
+            </p>
+          </div>
+          <hr className="mb-3" />
+          {followersExpanded && (
+            <ul className="space-y-2 mt-2 transition-all duration-300 ease-in-out">
+              {followers.length > 0 ? (
+                followers.map(u => renderUser(u))
+              ) : (
+                <li className="text-center text-sm text-gray-500 py-2">No followers yet</li>
+              )}
+            </ul>
+          )}
+        </div>
 
-                <FollowersIcon color="primary" sx={{ mr: 1 }} />
-                <Typography variant="subtitle1" fontWeight="medium">
-                  Followers ({state.followers.length}) {followersExpanded ? '▲' : '▼'}
-                </Typography>
-              </Box>
-              <Divider sx={{ mb: 2 }} />
-              <Collapse in={followersExpanded} timeout="auto" unmountOnExit>
-                {state.followers.length > 0 ? (
-                  <List disablePadding>
-                    {state.followers.map(u => renderUserItem(u))}
-                  </List>
-                ) : (
-                  <Box>
-                    <FollowersIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
-                    <Typography variant="body1" sx={{ mb: 1 }}>
-                      No followers yet
-                    </Typography>
-                  </Box>
-                )}
-              </Collapse>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Following */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ borderRadius: 2, mx: 'auto', width: 400 }}>
-            <CardContent>
-              <Box
-                sx={{ display: 'flex', alignItems: 'center', mb: 2, cursor: 'pointer' }}
-                onClick={() => setFollowingExpanded(prev => !prev)}
-              >
-                <FollowersIcon color="secondary" sx={{ mr: 1 }} />
-                <Typography variant="subtitle1" fontWeight="medium">
-                  Following ({state.following.length}) {followingExpanded ? '▲' : '▼'}
-                </Typography>
-              </Box>
-              <Divider sx={{ mb: 2 }} />
-
-              <Collapse in={followingExpanded} timeout="auto" unmountOnExit>
-                {state.following.length > 0 ? (
-                  <List disablePadding>
-                    {state.following.map(u => renderUserItem(u, true))}
-
-                  </List>
-                ) : (
-                  <Box >
-                    <FollowersIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
-                    <Typography variant="body1" sx={{ mb: 1 }}>
-                      Not following anyone yet
-                    </Typography>
-                  </Box>
-                )}
-              </Collapse>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
+        {/* Following Card */}
+        <div className="bg-white shadow-md rounded-xl p-4 w-full md:w-1/2">
+          <div
+            className="flex items-center cursor-pointer mb-2"
+            onClick={() => setFollowingExpanded(prev => !prev)}
+          >
+            <FollowersIcon className="text-purple-500 mr-2" />
+            <p className="font-medium">
+              Following ({following.length}) {followingExpanded ? '▲' : '▼'}
+            </p>
+          </div>
+          <hr className="mb-3" />
+          {followingExpanded && (
+            <ul className="space-y-2 mt-2 transition-all duration-300 ease-in-out">
+              {following.length > 0 ? (
+                following.map(u => renderUser(u, true))
+              ) : (
+                <li className="text-center text-sm text-gray-500 py-2">Not following anyone yet</li>
+              )}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 

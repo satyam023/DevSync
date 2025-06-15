@@ -1,19 +1,20 @@
-import { useParams, Outlet, NavLink, useLocation } from 'react-router-dom';
+import { useParams, Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import API from '../../utils/axios.jsx';
-import { Box,  Typography,  CircularProgress,  Avatar,  Tabs,  Tab, Grid, Card, Divider, Chip, Badge} from '@mui/material';
+import { Avatar, CircularProgress, Chip } from '@mui/material';
 
 const UserProfilePage = () => {
   const { id } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  function capitalizeFirstSentence(str) {
+  const capitalizeFirstSentence = (str) => {
     if (!str) return '';
     str = str.trim().replace(/\s+/g, ' ');
     return str.charAt(0).toUpperCase() + str.slice(1);
-  }
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -26,157 +27,121 @@ const UserProfilePage = () => {
         setLoading(false);
       }
     };
-
     fetchUser();
   }, [id]);
 
-  if (loading) return <CircularProgress />;
-  if (!userProfile) return <Typography>User not found</Typography>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <CircularProgress />
+      </div>
+    );
+  }
+
+  if (!userProfile) {
+    return <p className="text-center text-red-600">User not found</p>;
+  }
 
   const normalizedRates = {
     mentor: userProfile.mentorRate || userProfile.rates?.mentor || 0,
-    developer: userProfile.developerRate || userProfile.rates?.developer || 0
+    developer: userProfile.developerRate || userProfile.rates?.developer || 0,
   };
-  const roleKey = userProfile.role?.toLowerCase();
 
-  // Determine active tab based on current route
-  const currentTab = location.pathname.includes('/posts') ? '/posts' : '/profile';
+  const roleKey = userProfile.role?.toLowerCase();
+  const isProfileTab = location.pathname === `/profile/${id}`;
 
   return (
-    <Box sx={{ p: 4 }}>
-
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 4 }}>
-        <Badge
-          overlap="circular"
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          badgeContent={
-            <Box  sx={{width: 16,height: 16,borderRadius: '50%',bgcolor: 'primary.main',border: '2px solid white'}}/>
-          }
-        >
-          <Avatar 
-            src={userProfile.image} 
-            sx={{ 
-              width: 80, 
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 min-h-screen overflow-y-auto">
+      {/* Profile Header */}
+      <div className="flex justify-center mb-6">
+        <div className="flex gap-3">
+          <button
+            onClick={() => navigate(`/profile/${id}`)}
+            className={`px-4 py-2 rounded-full font-semibold transition ${isProfileTab
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+          >
+            Profile
+          </button>
+          <button
+            onClick={() => navigate(`/profile/${id}/posts`)}
+            className={`px-4 py-2 rounded-full font-semibold transition ${!isProfileTab
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+          >
+            Posts
+          </button>
+        </div>
+      </div>
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mb-6">
+        <div className="relative">
+          <Avatar
+            src={userProfile.image}
+            sx={{
+              width: 80,
               height: 80,
-              border: '3px solid',
-              borderColor: 'primary.main'
-            }} 
+              border: '3px solid #3b82f6'
+            }}
           />
-        </Badge>
-        <Box>
-          <Typography variant="h4" component="h1" gutterBottom>
-            {userProfile.name}
-          </Typography>
-          <Typography variant="subtitle1" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
+          <div className="absolute bottom-0 right-0 w-4 h-4 bg-blue-500 border-2 border-white rounded-full"></div>
+        </div>
+        <div className="text-center sm:text-left">
+          <h1 className="text-2xl font-semibold">{userProfile.name}</h1>
+          <p className="text-gray-600 italic">
             {capitalizeFirstSentence(userProfile.bio) || 'No bio provided'}
-          </Typography>
-        </Box>
-      </Box>
-
-      {/* Tabs with Active Highlighting */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
-        <Tabs value={currentTab}>
-          <Tab
-            label="Profile"
-            component={NavLink}
-            to={`/profile/${id}`}
-            value="/profile"
-            sx={{ 
-              textTransform: 'none',
-              fontWeight: currentTab === '/profile' ? 'bold' : 'normal',
-              color: currentTab === '/profile' ? 'primary.main' : 'inherit'
-            }}
-          />
-          <Tab
-            label="Posts"
-            component={NavLink}
-            to={`/profile/${id}/posts`}
-            value="/posts"
-            sx={{ 
-              textTransform: 'none',
-              fontWeight: currentTab === '/posts' ? 'bold' : 'normal',
-              color: currentTab === '/posts' ? 'primary.main' : 'inherit'
-            }}
-          />
-        </Tabs>
-      </Box>
-
-      {/* Main Content Area */}
-      <Box sx={{ mt: 3 }}>
+          </p>
+        </div>
+      </div>
+      {/* Main Content */}
+      <div className="mt-4">
         <Outlet />
 
-        {/* Default Profile Content */}
-        {currentTab === '/profile' && (
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={6}>
-              <Card sx={{ 
-                p: 3, 
-                borderRadius: 3, 
-                boxShadow: 3,
-                height: '70%',
-                 minHeight: 100
-              }}>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  Basic Information
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Typography>
-                    <Box component="span" fontWeight="bold">Gender:</Box> {userProfile.gender || 'Not specified'}
-                  </Typography>
-                  <Typography>
-                    <Box component="span" fontWeight="bold">Role:</Box> {userProfile.role ? capitalizeFirstSentence(userProfile.role) : 'Learner'}
-                  </Typography>
-                  <Typography>
-                    <Box component="span" fontWeight="bold">Joined:</Box> {new Date(userProfile.createdAt).toLocaleDateString()}
-                  </Typography>
-                </Box>
-              </Card>
-            </Grid>
+        {isProfileTab && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10">
+            {/* Basic Info */}
+            <div className="bg-white shadow rounded-xl p-5 overflow-auto">
+              <h2 className="text-lg font-semibold mb-2">Basic Information</h2>
+              <hr className="mb-3" />
+              <p><span className="font-medium">Gender:</span> {userProfile.gender || 'Not specified'}</p>
+              <p><span className="font-medium">Role:</span> {userProfile.role ? capitalizeFirstSentence(userProfile.role) : 'Learner'}</p>
+              <p><span className="font-medium">Joined:</span> {new Date(userProfile.createdAt).toLocaleDateString()}</p>
+            </div>
 
-            <Grid item xs={12} md={6}>
-              <Card sx={{ 
-                p: 3, 
-                borderRadius: 3, 
-                boxShadow: 3,
-                height: '70%',
-                minHeight: 100
-              }}>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  Professional Details
-                </Typography>
-                <Divider sx={{ mb: 2 }} />
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" gutterBottom>Skills:</Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {userProfile.skills?.length > 0 ? (
-                      userProfile.skills.map((skill, i) => (
-                        <Chip 
-                          key={i} 
-                          label={skill} 
-                          size="small" 
-                          color="primary"
-                          variant="outlined"
-                        />
-                      ))
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        No skills listed
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
-                {normalizedRates[roleKey] > 0 && (
-                  <Typography>
-                    <Box component="span" fontWeight="bold">Rate:</Box> ₹{normalizedRates[roleKey]} / {roleKey === 'mentor' ? 'month' : 'project'}
-                  </Typography>
-                )}
-              </Card>
-            </Grid>
-          </Grid>
+            {/* Professional Details */}
+            <div className="bg-white shadow rounded-xl p-5 overflow-auto">
+              <h2 className="text-lg font-semibold mb-2">Professional Details</h2>
+              <hr className="mb-3" />
+              <div className="mb-3">
+                <p className="text-sm font-medium mb-1">Skills:</p>
+                <div className="flex flex-wrap gap-2">
+                  {userProfile.skills?.length > 0 ? (
+                    userProfile.skills.map((skill, i) => (
+                      <Chip
+                        key={i}
+                        label={skill}
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                      />
+                    ))
+                  ) : (
+                    <span className="text-gray-500 text-sm">No skills listed</span>
+                  )}
+                </div>
+              </div>
+              {normalizedRates[roleKey] > 0 && (
+                <p>
+                  <span className="font-medium">Rate:</span> ₹{normalizedRates[roleKey]} /{' '}
+                  {roleKey === 'mentor' ? 'month' : 'project'}
+                </p>
+              )}
+            </div>
+          </div>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

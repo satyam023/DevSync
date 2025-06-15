@@ -1,21 +1,12 @@
 import React, { useState } from 'react';
-import {
-  TextField,
-  Button,
-  Box,
-  Typography,
-  Alert,
-  Paper
-} from '@mui/material';
-import API from '../../utils/axios.jsx'
-
+import API from '../../utils/axios.jsx';
 import { useAuth } from '../../context/authContext.jsx';
-import { useLocation, useNavigate } from 'react-router-dom'; 
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const SkillExchangeForm = () => {
   const { user: currentUser } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const { recipientId } = location.state || {};
 
@@ -40,7 +31,7 @@ const SkillExchangeForm = () => {
         {
           recipientId,
           offeredSkills: offeredSkills.split(',').map(skill => skill.trim()),
-          requestedSkills: requestedSkills.split(',').map(skill => skill.trim())
+          requestedSkills: requestedSkills.split(',').map(skill => skill.trim()),
         },
         { withCredentials: true }
       );
@@ -54,59 +45,75 @@ const SkillExchangeForm = () => {
   };
 
   const handleClose = () => {
-    navigate(-1); 
+    navigate(-1);
   };
 
   return (
-    <Paper elevation={3} sx={{ maxWidth: 500, mx: 'auto', p: 3, mt: 4, position: 'relative' }}>
-      <Button
-        onClick={handleClose}
-        sx={{ position: 'absolute', top: 8, right: 8, minWidth: 'unset', fontSize: '1.2rem' }}
-        color="error"
-      >
-        ❌
-      </Button>
-      <Typography variant="h5" gutterBottom>
-        Request Skill Exchange
-      </Typography>
+<div className="fixed inset-0 bg-gradient-to-br from-blue-100 to-blue-300 flex items-center justify-center px-4">
+  <div className="bg-white w-full max-w-lg p-6 rounded-lg shadow-lg">
+         <button
+          onClick={handleClose}
+          className="absolute top-3 right-3 text-xl text-red-500 hover:text-red-600"
+          aria-label="Close"
+        >
+          ❌
+        </button>
 
-      <Box component="form" onSubmit={handleSubmit} noValidate>
-        <TextField
-          label="Offered Skills"
-          variant="outlined"
-          fullWidth
-          margin="normal"
-          value={offeredSkills}
-          onChange={(e) => setOfferedSkills(e.target.value)}
-          placeholder="e.g., React, Node.js"
-          required
-        />
-        <TextField
-          label="Requested Skills"
-          variant="outlined"
-          fullWidth
-          margin="normal"
-          value={requestedSkills}
-          onChange={(e) => setRequestedSkills(e.target.value)}
-          placeholder="e.g., MongoDB, AWS"
-          required
-        />
-        <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
-          Send Request
-        </Button>
+        <h2 className="text-2xl font-semibold text-center text-blue-700 mb-4">
+          Request Skill Exchange
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="offeredSkills" className="block text-sm font-medium text-gray-700">
+              Offered Skills <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="offeredSkills"
+              value={offeredSkills}
+              onChange={(e) => setOfferedSkills(e.target.value)}
+              placeholder="e.g., React, Node.js"
+              required
+              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="requestedSkills" className="block text-sm font-medium text-gray-700">
+              Requested Skills <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="requestedSkills"
+              value={requestedSkills}
+              onChange={(e) => setRequestedSkills(e.target.value)}
+              placeholder="e.g., MongoDB, AWS"
+              required
+              className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition"
+          >
+            Send Request
+          </button>
+        </form>
 
         {message && (
-          <Alert severity="success" sx={{ mt: 2 }} onClose={() => setMessage('')}>
+          <div className="mt-4 p-3 bg-green-100 border border-green-300 text-green-800 rounded-md text-sm">
             {message}
-          </Alert>
+          </div>
         )}
         {error && (
-          <Alert severity="error" sx={{ mt: 2 }} onClose={() => setError('')}>
+          <div className="mt-4 p-3 bg-red-100 border border-red-300 text-red-800 rounded-md text-sm">
             {error}
-          </Alert>
+          </div>
         )}
-      </Box>
-    </Paper>
+      </div>
+    </div>
   );
 };
 
