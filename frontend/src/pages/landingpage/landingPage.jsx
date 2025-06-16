@@ -15,8 +15,6 @@ const LandingPage = () => {
     }
   }, [user, loading, navigate]);
 
-  if (loading || user) return null;
-
   return (
     <div className="bg-gradient-to-b from-gray-100 to-white min-h-screen w-full">
       {/* Hero Section */}
