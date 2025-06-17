@@ -1,7 +1,13 @@
 import { useParams } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import API from '../../utils/axios.jsx';
-import { Box, CircularProgress, Typography, Container } from '@mui/material';
+import {
+  Box,
+  CircularProgress,
+  Typography,
+  Container,
+  Grid
+} from '@mui/material';
 import ErrorBoundary from '../../components/dialog/errorBoundry.jsx';
 import PostCard from './../postpage/postCard.jsx';
 import { useAuth } from '../../context/authContext';
@@ -28,45 +34,48 @@ const UserPosts = () => {
     fetchData();
   }, [id]);
 
-  if (loading) return (
-    <Box display="flex" justifyContent="center" mt={4}>
-      <CircularProgress />
-    </Box>
-  );
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" mt={4}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
-  if (error) return (
-    <Typography color="error" align="center" mt={4}>
-      {error}
-    </Typography>
-  );
+  if (error) {
+    return (
+      <Typography color="error" align="center" mt={4}>
+        {error}
+      </Typography>
+    );
+  }
 
   return (
-    <Container
-      maxWidth="xl"
-      sx={{ mt: 4, mb: 6 }}
-      className="px-4 sm:px-6"
-    >
-      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <Container maxWidth="xl" sx={{ mt: 4, mb: 6, px: { xs: 2, md: 4 } }}>
+      <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
+        Posts by this User
+      </Typography>
+
+      <Grid container spacing={4}>
         {posts.length === 0 ? (
-          <div className="col-span-full text-center py-10">
-            <Typography variant="h6" className="text-gray-600">
+          <Grid item xs={12}>
+            <Typography align="center" color="text.secondary">
               No posts from this user yet.
             </Typography>
-          </div>
+          </Grid>
         ) : (
           posts.map((post) => (
-            <div key={post._id} className="w-full">
+            <Grid item xs={12} sm={6} md={4} lg={4} key={post._id}>
               <PostCard
                 post={post}
                 user={currentUser}
                 setPosts={setPosts}
                 setFilteredPosts={setPosts}
               />
-            </div>
+            </Grid>
           ))
         )}
-      </div>
-
+      </Grid>
     </Container>
   );
 };
