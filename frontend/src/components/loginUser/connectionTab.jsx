@@ -7,10 +7,12 @@ import {
 import API from '../../utils/axios';
 import { useSnackbar } from 'notistack';
 import { useAuth } from '../../context/authContext';
+import { useNavigate } from 'react-router-dom';
 
 const ConnectionsTab = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
@@ -98,7 +100,7 @@ const ConnectionsTab = () => {
         key={u._id}
         className="flex justify-between items-center px-3 py-2 hover:bg-gray-100 rounded-lg mb-1"
       >
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate(`/profile/${u._id}`)}>
           <img
             src={u.image || ''}
             alt="avatar"
@@ -113,12 +115,13 @@ const ConnectionsTab = () => {
             )}
           </div>
         </div>
+
         {!isSelf && (
           <button
             onClick={() => handleFollowToggle(u._id, isFollowing)}
             className={`text-xs px-3 py-1 font-medium rounded-full border transition ${isFollowing
-                ? 'text-red-600 border-red-500 hover:bg-red-100'
-                : 'text-white bg-blue-600 border-blue-600 hover:bg-blue-700'
+              ? 'text-red-600 border-red-500 hover:bg-red-100'
+              : 'text-white bg-blue-600 border-blue-600 hover:bg-blue-700'
               }`}
           >
             {isFollowing ? (

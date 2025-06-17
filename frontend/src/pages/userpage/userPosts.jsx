@@ -46,7 +46,7 @@ const UserPosts = () => {
       sx={{ mt: 4, mb: 6 }}
       className="px-4 sm:px-6"
     >
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {posts.length === 0 ? (
           <div className="col-span-full text-center py-10">
             <Typography variant="h6" className="text-gray-600">
@@ -55,19 +55,18 @@ const UserPosts = () => {
           </div>
         ) : (
           posts.map((post) => (
-            <div key={post._id} className="flex justify-center">
-              <Box className="w-full max-w-md">
-                <PostCard
-                  post={post}
-                  user={currentUser}
-                  setPosts={setPosts}
-                  setFilteredPosts={setPosts}
-                />
-              </Box>
+            <div key={post._id} className="w-full">
+              <PostCard
+                post={post}
+                user={currentUser}
+                setPosts={setPosts}
+                setFilteredPosts={setPosts}
+              />
             </div>
           ))
         )}
       </div>
+
     </Container>
   );
 };
