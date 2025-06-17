@@ -1,13 +1,7 @@
 import { useParams } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import API from '../../utils/axios.jsx';
-import {
-  Box,
-  CircularProgress,
-  Typography,
-  Container,
-  Grid
-} from '@mui/material';
+import { CircularProgress, Typography, Container, Box } from '@mui/material';
 import ErrorBoundary from '../../components/dialog/errorBoundry.jsx';
 import PostCard from './../postpage/postCard.jsx';
 import { useAuth } from '../../context/authContext';
@@ -51,31 +45,40 @@ const UserPosts = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 6, px: { xs: 2, md: 4 } }}>
-      <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
-        Posts by this User
-      </Typography>
+    <Container maxWidth="xl" sx={{ mt: 4, mb: 6 }}>
+      <div className="px-4 sm:px-6 lg:px-8">
+        <h2 className="text-2xl font-semibold mb-6 text-gray-800">
+          Posts by this User
+        </h2>
 
-      <Grid container spacing={4}>
         {posts.length === 0 ? (
-          <Grid item xs={12}>
-            <Typography align="center" color="text.secondary">
+          <div className="text-center py-12">
+            <Typography variant="body1" color="textSecondary">
               No posts from this user yet.
             </Typography>
-          </Grid>
+          </div>
         ) : (
-          posts.map((post) => (
-            <Grid item xs={12} sm={6} md={4} lg={4} key={post._id}>
-              <PostCard
-                post={post}
-                user={currentUser}
-                setPosts={setPosts}
-                setFilteredPosts={setPosts}
-              />
-            </Grid>
-          ))
+          <div className={`grid ${posts.length === 2 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3'} gap-6`}>
+            {posts.map((post) => (
+              <div 
+                key={post._id} 
+                className={`w-full h-full flex justify-center ${posts.length === 2 ? 'max-w-2xl' : ''}`}
+              >
+                <PostCard
+                  post={post}
+                  user={currentUser}
+                  setPosts={setPosts}
+                  setFilteredPosts={setPosts}
+                  sx={{
+                    width: posts.length === 2 ? '100%' : '100%',
+                    maxWidth: posts.length === 2 ? '600px' : 'none'
+                  }}
+                />
+              </div>
+            ))}
+          </div>
         )}
-      </Grid>
+      </div>
     </Container>
   );
 };
