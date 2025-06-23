@@ -117,7 +117,7 @@ const PostInteraction = ({ post, user, updatePosts }) => {
                     )
                   }
                 >
-                  <Avatar src={comment.author?.avatar} sx={{ width: 32, height: 32, mr: 2, mt: '4px' }} />
+                  <Avatar src={comment.author?.image} sx={{ width: 32, height: 32, mr: 2, mt: '4px' }} />
                   <ListItemText
                     primary={
                       <Typography variant="subtitle2" fontWeight="bold">
