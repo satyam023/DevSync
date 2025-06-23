@@ -36,7 +36,7 @@ const PostCard = ({ post, user, setPosts, setFilteredPosts }) => {
       )}
       <CardContent sx={{ px: 4, py: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <Avatar src={post.author?.avatar} alt={post.author?.name} sx={{ width: 40, height: 40, mr: 2 }} />
+          <Avatar src={post.author?.image} alt={post.author?.name} sx={{ width: 40, height: 40, mr: 2 }} />
           <Box>
             <Typography variant="subtitle1" fontWeight="bold">
               {post.author?.name || 'Unknown'}
