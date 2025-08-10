@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import API from '../../utils/axios.jsx';
-import { AiOutlineSwap } from 'react-icons/ai';
-import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
-import { MdPendingActions } from 'react-icons/md';
-import { RiCheckboxCircleLine } from 'react-icons/ri';
-import Avatar from '@mui/material/Avatar';
+import React, { useEffect, useState } from "react";
+import API from "../../utils/axios.jsx";
+import { AiOutlineSwap } from "react-icons/ai";
+import { IoChevronDown, IoChevronUp } from "react-icons/io5";
+import { MdPendingActions } from "react-icons/md";
+import { RiCheckboxCircleLine } from "react-icons/ri";
+import Avatar from "@mui/material/Avatar";
 
 const SkillExchangeRequests = ({ userId }) => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [activeTab, setActiveTab] = useState(0);
   const [expandedSections, setExpandedSections] = useState({
     pending: true,
@@ -18,30 +18,23 @@ const SkillExchangeRequests = ({ userId }) => {
     sent: false,
   });
 
-  const fetchRequests = async () => {
-    try {
-      setLoading(true);
-      const response = await API.get('/skill-exchange/get-skills', { withCredentials: true });
-      setRequests(response.data.data);
-    } catch (err) {
-      setError('Failed to load requests.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    if (!userId) return;
-    fetchRequests();
-    let count = 0;
-    const maxRefreshCount = 2;
-    const intervalId = setInterval(() => {
-      count++;
-      if (count > maxRefreshCount) clearInterval(intervalId);
-      else fetchRequests();
-    }, 300000);
-    return () => clearInterval(intervalId);
-  }, [userId, activeTab]);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const res = await API.get("/skill-exchange/get-skills", {
+          withCredentials: true,
+        });
+        setRequests(res.data.data || []);
+      } catch (err) {
+        setError("Failed to load requests.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleRespond = async (exchangeId, status) => {
     try {
@@ -50,10 +43,11 @@ const SkillExchangeRequests = ({ userId }) => {
         { status },
         { withCredentials: true }
       );
-      const { request, updatedRequester, updatedRecipient } = response.data.data;
+      const { request, updatedRequester, updatedRecipient } =
+        response.data.data;
       setSuccess(`Request ${status}`);
-      setRequests(prev =>
-        prev.map(r =>
+      setRequests((prev) =>
+        prev.map((r) =>
           r._id === exchangeId
             ? {
                 ...request,
@@ -63,34 +57,29 @@ const SkillExchangeRequests = ({ userId }) => {
             : r
         )
       );
-      setTimeout(() => setSuccess(''), 3000);
+      setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError('Failed to respond to request.');
-      setTimeout(() => setError(''), 3000);
+      setError("Failed to respond to request.");
+      setTimeout(() => setError(""), 3000);
     }
   };
 
-  const toggleSection = section => {
-    setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  const toggleSection = (section) => {
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
   // Correct filtering
   const pending = requests.filter(
-    r =>
-      r.status === 'pending' &&
-      r.recipient._id === userId // only show pending requests *to* the user
+    (r) => r.status === "pending" && r.recipient._id === userId // only show pending requests *to* the user
   );
 
   const accepted = requests.filter(
-    r =>
-      r.status === 'accepted' &&
+    (r) =>
+      r.status === "accepted" &&
       (r.recipient._id === userId || r.requester._id === userId)
   );
 
-  const sentByMe = requests.filter(
-    r =>
-      r.requester._id === userId
-  );
+  const sentByMe = requests.filter((r) => r.requester._id === userId);
 
   const renderRequestCard = (req, isPending = false) => (
     <div
@@ -100,31 +89,41 @@ const SkillExchangeRequests = ({ userId }) => {
       <div className="flex items-start gap-3 mb-3">
         <Avatar
           alt={req.requester.name}
-          src={req.requester.image || ''}
+          src={req.requester.image || ""}
           sx={{ width: 40, height: 40 }}
         />
         <div className="flex-1">
           <p className="font-medium text-gray-800">{req.requester.name}</p>
-          <p className={`text-sm mt-1 ${
-            req.status === 'rejected' ? 'text-red-500' :
-            isPending ? 'text-yellow-600' : 'text-green-600'
-          }`}>
-            {req.status === 'pending'
+          <p
+            className={`text-sm mt-1 ${
+              req.status === "rejected"
+                ? "text-red-500"
+                : isPending
+                ? "text-yellow-600"
+                : "text-green-600"
+            }`}
+          >
+            {req.status === "pending"
               ? `Waiting for response from ${req.recipient?.name}`
-              : req.status === 'accepted'
+              : req.status === "accepted"
               ? `Exchange accepted by ${req.recipient?.name}`
-              : req.status === 'rejected'
+              : req.status === "rejected"
               ? `Rejected by ${req.recipient?.name}`
-              : ''}
+              : ""}
           </p>
         </div>
       </div>
 
       <div className="mb-3">
-        <p className="text-xs font-medium text-gray-500 mb-1">OFFERED SKILLS:</p>
+        <p className="text-xs font-medium text-gray-500 mb-1">
+          OFFERED SKILLS:
+        </p>
         <div className="flex flex-wrap gap-2">
-          {req.offeredSkills.map(skill => (
-            <span key={skill} className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium">
+          {req.offeredSkills.map((skill) => (
+            <span
+              key={skill}
+              className="text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full font-medium"
+            >
               {skill}
             </span>
           ))}
@@ -132,10 +131,15 @@ const SkillExchangeRequests = ({ userId }) => {
       </div>
 
       <div className="mb-3">
-        <p className="text-xs font-medium text-gray-500 mb-1">REQUESTED SKILLS:</p>
+        <p className="text-xs font-medium text-gray-500 mb-1">
+          REQUESTED SKILLS:
+        </p>
         <div className="flex flex-wrap gap-2">
-          {req.requestedSkills.map(skill => (
-            <span key={skill} className="text-xs bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full font-medium">
+          {req.requestedSkills.map((skill) => (
+            <span
+              key={skill}
+              className="text-xs bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full font-medium"
+            >
               {skill}
             </span>
           ))}
@@ -145,13 +149,13 @@ const SkillExchangeRequests = ({ userId }) => {
       {isPending && req.recipient._id === userId && (
         <div className="flex flex-wrap justify-end gap-2">
           <button
-            onClick={() => handleRespond(req._id, 'rejected')}
+            onClick={() => handleRespond(req._id, "rejected")}
             className="px-3 py-1.5 text-xs font-medium bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
           >
             Reject
           </button>
           <button
-            onClick={() => handleRespond(req._id, 'accepted')}
+            onClick={() => handleRespond(req._id, "accepted")}
             className="px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
             Accept
@@ -161,18 +165,29 @@ const SkillExchangeRequests = ({ userId }) => {
     </div>
   );
 
-  const renderSection = (label, Icon, count, sectionKey, items, isPending = false) => (
+  const renderSection = (
+    label,
+    Icon,
+    count,
+    sectionKey,
+    items,
+    isPending = false
+  ) => (
     <div>
       <div
         className="flex items-center justify-between cursor-pointer mb-3 p-2 bg-gray-50 rounded-lg"
         onClick={() => toggleSection(sectionKey)}
       >
         <div className="flex items-center">
-          <Icon className={`mr-2 ${
-            sectionKey === 'pending' ? 'text-yellow-600' :
-            sectionKey === 'accepted' ? 'text-green-600' :
-            'text-blue-600'
-          }`} />
+          <Icon
+            className={`mr-2 ${
+              sectionKey === "pending"
+                ? "text-yellow-600"
+                : sectionKey === "accepted"
+                ? "text-green-600"
+                : "text-blue-600"
+            }`}
+          />
           <h2 className="text-sm font-medium text-gray-700">
             {label.toUpperCase()} ({count})
           </h2>
@@ -190,7 +205,7 @@ const SkillExchangeRequests = ({ userId }) => {
               No {label.toLowerCase()} found.
             </div>
           ) : (
-            items.map(req => renderRequestCard(req, isPending))
+            items.map((req) => renderRequestCard(req, isPending))
           )}
         </div>
       )}
@@ -200,7 +215,9 @@ const SkillExchangeRequests = ({ userId }) => {
   if (loading) {
     return (
       <div className="w-full max-w-5xl mx-auto p-4 bg-white rounded-lg shadow-sm border border-gray-100 mt-4">
-        <div className="text-center py-6 text-gray-500">Loading skill exchange requests...</div>
+        <div className="text-center py-6 text-gray-500">
+          Loading skill exchange requests...
+        </div>
       </div>
     );
   }
@@ -225,13 +242,17 @@ const SkillExchangeRequests = ({ userId }) => {
 
       {/* Tab Navigation */}
       <div className="flex overflow-x-auto border-b border-gray-200 mb-4">
-        {[`Pending (${pending.length})`, `Accepted (${accepted.length})`, `Sent (${sentByMe.length})`].map((tab, idx) => (
+        {[
+          `Pending (${pending.length})`,
+          `Accepted (${accepted.length})`,
+          `Sent (${sentByMe.length})`,
+        ].map((tab, idx) => (
           <button
             key={idx}
             className={`px-4 py-2 whitespace-nowrap border-b-2 text-sm font-medium transition-all ${
               activeTab === idx
-                ? 'border-blue-600 text-blue-600'
-                : 'text-gray-500 hover:text-blue-600 border-transparent'
+                ? "border-blue-600 text-blue-600"
+                : "text-gray-500 hover:text-blue-600 border-transparent"
             }`}
             onClick={() => setActiveTab(idx)}
           >
@@ -242,9 +263,31 @@ const SkillExchangeRequests = ({ userId }) => {
 
       {/* Section Body */}
       <div className="space-y-4">
-        {activeTab === 0 && renderSection('Pending Requests', MdPendingActions, pending.length, 'pending', pending, true)}
-        {activeTab === 1 && renderSection('Accepted Exchanges', RiCheckboxCircleLine, accepted.length, 'accepted', accepted)}
-        {activeTab === 2 && renderSection('Sent Requests', AiOutlineSwap, sentByMe.length, 'sent', sentByMe)}
+        {activeTab === 0 &&
+          renderSection(
+            "Pending Requests",
+            MdPendingActions,
+            pending.length,
+            "pending",
+            pending,
+            true
+          )}
+        {activeTab === 1 &&
+          renderSection(
+            "Accepted Exchanges",
+            RiCheckboxCircleLine,
+            accepted.length,
+            "accepted",
+            accepted
+          )}
+        {activeTab === 2 &&
+          renderSection(
+            "Sent Requests",
+            AiOutlineSwap,
+            sentByMe.length,
+            "sent",
+            sentByMe
+          )}
       </div>
     </div>
   );

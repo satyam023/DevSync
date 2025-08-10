@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import API from '../utils/axios';
+import { createContext, useContext, useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import API from "../utils/axios";
 import {
   Dialog,
   DialogTitle,
@@ -8,8 +8,8 @@ import {
   DialogContentText,
   DialogActions,
   Button,
-  CircularProgress
-} from '@mui/material';
+  CircularProgress,
+} from "@mui/material";
 
 const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
   const checkAuth = async () => {
     try {
       setLoading(true);
-      const { data } = await API.get('/auth/check-auth');
+      const { data } = await API.get("/auth/check-auth");
       if (data?.user) {
         setUser(data.user);
       } else {
@@ -40,27 +40,27 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       clearAuthState();
       redirectIfNotOnAuthPage();
-      console.error('Auth check error:', error);
+      console.error("Auth check error:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const redirectIfNotOnAuthPage = () => {
-    const publicRoutes = ['/', '/signup'];
+    const publicRoutes = ["/", "/signup"];
     if (!publicRoutes.includes(location.pathname)) {
-      navigate('/login', { replace: true });
+      navigate("/login", { replace: true });
     }
   };
 
   const register = async (userData) => {
     try {
       setLoading(true);
-      const { data } = await API.post('/auth/signup', userData);
+      const { data } = await API.post("/auth/signup", userData);
       setUser(data.user);
       return { success: true, data };
     } catch (error) {
-      const errorMsg = error.message || 'Registration failed';
+      const errorMsg = error.message || "Registration failed";
       setAuthError(errorMsg);
       return { success: false, error: errorMsg };
     } finally {
@@ -71,12 +71,13 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       setLoading(true);
-      const { data } = await API.post('/auth/login', credentials);
+      const { data } = await API.post("/auth/login", credentials);
       setUser(data.user);
       setAuthError(null);
+
       return { success: true, data };
     } catch (error) {
-      const errorMsg = error.message || 'Login failed';
+      const errorMsg = error.message || "Login failed";
       setAuthError(errorMsg);
       return { success: false, error: errorMsg };
     } finally {
@@ -87,12 +88,12 @@ export const AuthProvider = ({ children }) => {
   const confirmLogout = async () => {
     try {
       setLoading(true);
-      await API.post('/auth/logout');
+      await API.post("/auth/logout");
       clearAuthState();
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
     } catch (error) {
-      console.error('Logout error:', error);
-      setAuthError('Failed to logout properly');
+      console.error("Logout error:", error);
+      setAuthError("Failed to logout properly");
     } finally {
       setLoading(false);
       setShowLogoutConfirm(false);
@@ -102,15 +103,15 @@ export const AuthProvider = ({ children }) => {
   const deleteAccount = async () => {
     try {
       setLoading(true);
-      const { data } = await API.delete('/auth/delete');
+      const { data } = await API.delete("/auth/delete");
       if (!data?.success) {
-        throw new Error(data?.message || 'Account deletion failed');
+        throw new Error(data?.message || "Account deletion failed");
       }
       clearAuthState();
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
       return { success: true, message: data.message };
     } catch (error) {
-      const errorMsg = error.message || 'Account deletion failed';
+      const errorMsg = error.message || "Account deletion failed";
       setAuthError(errorMsg);
       return { success: false, error: errorMsg };
     } finally {
@@ -121,11 +122,16 @@ export const AuthProvider = ({ children }) => {
   const updateProfile = async (profileData) => {
     try {
       setLoading(true);
-      const { data } = await API.put('/users/profile', profileData);
+      const { data } = await API.put("/users/profile", profileData);
+      //  Temporarily set minimal user so UI doesn't flicker
       setUser(data.user);
+      // Now fetch full user info
+      await checkAuth();
+
+      setAuthError(null);
       return { success: true, data };
     } catch (error) {
-      const errorMsg = error.message || 'Profile update failed';
+      const errorMsg = error.message || "Profile update failed";
       setAuthError(errorMsg);
       throw error;
     } finally {
@@ -135,7 +141,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     checkAuth();
-    const interval = setInterval(checkAuth, 5 * 60 * 1000); 
+    const interval = setInterval(checkAuth, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -155,12 +161,15 @@ export const AuthProvider = ({ children }) => {
         updateProfile,
         deleteAccount,
         setUser,
-        checkAuth
+        checkAuth,
       }}
     >
       {children}
 
-      <Dialog open={showLogoutConfirm} onClose={() => setShowLogoutConfirm(false)}>
+      <Dialog
+        open={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+      >
         <DialogTitle>Confirm Logout</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -178,7 +187,7 @@ export const AuthProvider = ({ children }) => {
             disabled={loading}
             startIcon={loading ? <CircularProgress size={20} /> : null}
           >
-            {loading ? 'Logging Out...' : 'Logout'}
+            {loading ? "Logging Out..." : "Logout"}
           </Button>
         </DialogActions>
       </Dialog>

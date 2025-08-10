@@ -1,13 +1,16 @@
-import { useState } from 'react';
-import {
-  ChatBubbleOutline,
-  ExpandMore,
-  ExpandLess,
-} from '@mui/icons-material';
-import PostActions from './postActions';
-import PostComments from './postComment';
+import { useState } from "react";
+import { ChatBubbleOutline, ExpandMore, ExpandLess } from "@mui/icons-material";
+import PostActions from "./postActions";
+import PostComments from "./postComment";
 
-const PostCard = ({ post, currentUserId, onDelete, onToggleLike, onCommentSubmit }) => {
+const PostCard = ({
+  post,
+  currentUserId,
+  onDelete,
+  onToggleLike,
+  onCommentSubmit,
+  onDeleteComment,
+}) => {
   const [showComments, setShowComments] = useState(false);
   const [expanded, setExpanded] = useState(false);
 
@@ -17,9 +20,8 @@ const PostCard = ({ post, currentUserId, onDelete, onToggleLike, onCommentSubmit
   return (
     <div className="w-full flex justify-center px-4 sm:px-6 lg:px-0">
       <div className="w-full max-w-2xl bg-white dark:bg-gray-900 border dark:border-gray-700 rounded-lg shadow-md mb-6 overflow-hidden">
-
         {/* Image Section */}
-        {post.image && post.image !== 'No Photo' && (
+        {post.image && post.image !== "No Photo" && (
           <img
             src={post.image}
             alt={post.title}
@@ -38,14 +40,24 @@ const PostCard = ({ post, currentUserId, onDelete, onToggleLike, onCommentSubmit
           <div className="relative mb-3 text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
             {expanded
               ? post.content
-              : `${post.content.substring(0, 150)}${post.content.length > 150 ? '...' : ''}`}
-            
+              : `${post.content.substring(0, 150)}${
+                  post.content.length > 150 ? "..." : ""
+                }`}
+
             {post.content.length > 150 && (
               <button
                 onClick={toggleExpandContent}
                 className="text-blue-500 text-xs mt-1 inline-flex items-center"
               >
-                {expanded ? <>Show Less <ExpandLess fontSize="small" /></> : <>Show More <ExpandMore fontSize="small" /></>}
+                {expanded ? (
+                  <>
+                    Show Less <ExpandLess fontSize="small" />
+                  </>
+                ) : (
+                  <>
+                    Show More <ExpandMore fontSize="small" />
+                  </>
+                )}
               </button>
             )}
           </div>
@@ -72,7 +84,9 @@ const PostCard = ({ post, currentUserId, onDelete, onToggleLike, onCommentSubmit
               className="flex items-center text-sm text-gray-500 hover:text-blue-600 transition"
             >
               <ChatBubbleOutline fontSize="small" />
-              <span className="ml-1">{post.comments?.length || 0} comments</span>
+              <span className="ml-1">
+                {post.comments?.length || 0} comments
+              </span>
             </button>
           </div>
 
@@ -84,6 +98,7 @@ const PostCard = ({ post, currentUserId, onDelete, onToggleLike, onCommentSubmit
                 post={post}
                 currentUserId={currentUserId}
                 onCommentSubmit={onCommentSubmit}
+                onDeleteComment={onDeleteComment}
               />
             </>
           )}

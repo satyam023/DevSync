@@ -52,8 +52,8 @@ const getUserPost = async (req, res) => {
     }
 
     const posts = await Post.find({ author: userId })
-      .populate("author", "name email")
-      .populate("comments.author", "name email")
+      .populate("author", "name email image")
+      .populate("comments.author", "name email image")
       .sort({ createdAt: -1 })
       .lean({ virtuals: true });
 
@@ -74,8 +74,8 @@ const getUserPostById = async (req, res) => {
     const { userId } = req.params;
 
     const posts = await Post.find({ author: userId })
-      .populate("author", "name email")
-      .populate("comments.author", "name email")
+      .populate("author", "name email image")
+      .populate("comments.author", "name email image")
       .sort({ createdAt: -1 })
       .lean({ virtuals: true });
     res.status(200).json({ posts });
@@ -89,8 +89,8 @@ const getPostById = async (req, res) => {
   try {
     const { postId } = req.params;
     const post = await Post.findById(postId)
-      .populate("author", "name email")
-      .populate("comments.author", "name email");
+      .populate("author", "name email image")
+      .populate("comments.author", "name email image");
 
     if (!post) return res.status(404).json({ message: "Post not found" });
 
@@ -190,40 +190,37 @@ const addComment = async (req, res) => {
     const { text } = req.body;
     const userId = req.user.id;
 
-    // Validate input
     if (!text || !text.trim()) {
       return res.status(400).json({ message: "Comment text is required" });
     }
-    // Find post and populate necessary fields
+
     const post = await Post.findById(postId);
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
-    // Create new comment
+
     const newComment = {
       text: text.trim(),
       author: userId,
       createdAt: new Date(),
     };
 
-    // Add comment to post and save
     post.comments.push(newComment);
     await post.save();
 
-    // Get the updated post with populated author information
+    // Fetch updated post with full author data
     const populatedPost = await Post.findById(post._id)
-      .populate({
-        path: "comments.author",
-        select: "_id name avatar",
-      })
-      .populate("author", "_id name avatar");
-    res.status(201).json({
+      .populate("comments.author", "_id name email image")
+      .populate("author", "_id name email image")
+      .lean({ virtuals: true });
+
+    return res.status(200).json({
       message: "Comment added successfully",
       post: populatedPost,
     });
   } catch (error) {
     console.error("Add comment error:", error);
-    res.status(500).json({
+    return res.status(500).json({
       message: "Server error",
       error: error.message,
     });
@@ -234,6 +231,7 @@ const deleteComment = async (req, res) => {
   try {
     const { postId, commentId } = req.params;
     const userId = req.user.id;
+
     const post = await Post.findById(postId);
     if (!post) return res.status(404).json({ message: "Post not found" });
 
@@ -248,10 +246,19 @@ const deleteComment = async (req, res) => {
         .status(403)
         .json({ message: "Unauthorized to delete this comment" });
     }
+
     post.comments.splice(commentIndex, 1);
     await post.save();
 
-    res.status(200).json({ message: "Comment deleted successfully" });
+    const updatedPost = await Post.findById(postId)
+      .populate("comments.author", "_id name email image")
+      .populate("author", "_id name email image")
+      .lean({ virtuals: true });
+
+    return res.status(200).json({
+      message: "Comment deleted successfully",
+      post: updatedPost,
+    });
   } catch (error) {
     console.error("Delete comment error:", error);
     res.status(500).json({

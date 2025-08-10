@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../../context/authContext.jsx";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import API from "../../utils/axios.jsx";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -25,12 +26,16 @@ const Login = () => {
     setError("");
 
     try {
-      const { success, error } = await login(formData);
+      const res = await login(formData); // res has success, user, token, message
 
-      if (success) {
+      if (res.success) {
+        // Save token and image in localStorage
+        if (res.token) localStorage.setItem("token", res.token);
+        if (res.user?.image) localStorage.setItem("image", res.user.image);
+
         navigate("/home");
       } else {
-        setError(error || "Login failed. Please try again.");
+        setError(res.message || "Login failed. Please try again.");
       }
     } catch (err) {
       setError("An unexpected error occurred. Please try again.");
@@ -40,7 +45,7 @@ const Login = () => {
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-blue-100 to-blue-300 flex items-center justify-center px-4">
+    <div className="min-h-[calc(100vh-66px)] bg-gradient-to-br from-blue-100 to-blue-300 flex items-center justify-center px-4">
       <div className="w-full max-w-sm bg-white shadow-md rounded-lg p-6">
         <div className="flex flex-col items-center mb-4">
           <div className="bg-blue-600 text-white rounded-full p-2">
